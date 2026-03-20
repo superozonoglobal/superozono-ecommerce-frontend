@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/context/CartContext";
+import Initializer from "@/components/providers/Initializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Superozono | E-commerce",
-  description: "Tienda de productos e innovación. Encuentra lo que buscas.",
+  title: "SuperOzono - Tienda Oficial",
+  description: "La mejor tecnología en ozono para tu hogar y negocio.",
 };
 
 export default function RootLayout({
@@ -29,10 +30,11 @@ export default function RootLayout({
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <CartProvider>
+          <Initializer />
           <Header />
-          <main className="main-content">
-            {children}
-          </main>
+            <main className="main-content">
+              {children}
+            </main>
           <Footer />
         </CartProvider>
       </body>

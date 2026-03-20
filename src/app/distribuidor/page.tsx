@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 // Tipado para productos
 interface Product {
@@ -16,6 +18,15 @@ interface Product {
 const STORAGE_KEY = 'superozono_store_config';
 
 export default function DistribuidorDashboardPage() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    const user = api.users.getCurrentUser();
+    if (!user || user.role !== 'distribuidor') {
+      router.push('/login');
+    }
+  }, [router]);
+
   const [activeTab, setActiveTab] = useState('analiticas');
   const [primaryColor, setPrimaryColor] = useState('#3b82f6');
   const [accentColor, setAccentColor] = useState('#8b5cf6');

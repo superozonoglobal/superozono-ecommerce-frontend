@@ -1,133 +1,90 @@
 "use client";
+import React, { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import { User } from '@/types';
 
-import React, { useState } from 'react';
+export default function AdminDashboard() {
+  const [user, setUser] = useState<User | null>(null);
 
-export default function SuperAdminPage() {
-  const [activeTab, setActiveTab] = useState('tiendas');
+  useEffect(() => {
+    setUser(api.users.getCurrentUser());
+  }, []);
+
+  const stats = [
+    { title: 'Ganacias Totales', value: '$12,450.00', trend: '+12%', icon: '💰', color: '#10b981' },
+    { title: 'Nuevos Afiliados', value: '24', trend: '+5', icon: '🚀', color: '#3b82f6' },
+    { title: 'Admins Activos', value: '8', trend: 'Estable', icon: '👤', color: '#8b5cf6' },
+    { title: 'Salud del Sistema', value: '99.9%', trend: 'Óptimo', icon: '⚡', color: '#f59e0b' },
+  ];
 
   return (
-    <div className="page-container dashboard-layout" style={{ maxWidth: '1400px' }}>
-      <h1 style={{ marginBottom: '2rem' }}>Centro de Mando - SuperAdmin</h1>
-      
-      <div style={{ display: 'flex', gap: '2rem', minHeight: '600px' }}>
-        
-        {/* SIDEBAR ADMINISTRADOR MÁXIMO */}
-        <div className="glass-panel" style={{ width: '280px', height: 'fit-content', padding: '1.5rem 1rem', border: '1px solid rgba(139, 92, 246, 0.4)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
-            <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-              SA
+    <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+      <header style={{ marginBottom: '3rem' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>
+          Hola, {user?.name || 'Administrador'} 👋
+        </h1>
+        <p style={{ opacity: 0.6, fontSize: '1.1rem' }}>Este es el resumen operativo de Superozono Global.</p>
+      </header>
+
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+        {stats.map((stat, i) => (
+          <div key={i} className="glass-panel" style={{ padding: '1.5rem', borderLeft: `4px solid ${stat.color}`, transition: 'transform 0.2s' }}
+               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}
+               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
+              <span style={{ fontSize: '0.8rem', padding: '2px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', color: stat.trend.includes('+') ? '#4ade80' : '#fff' }}>
+                {stat.trend}
+              </span>
             </div>
-            <div>
-              <p style={{ fontWeight: 'bold' }}>Root Operador</p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mantenimiento Total</p>
-            </div>
+            <p style={{ fontSize: '0.9rem', opacity: 0.6, marginBottom: '0.2rem' }}>{stat.title}</p>
+            <h3 style={{ fontSize: '1.8rem', fontWeight: 800 }}>{stat.value}</h3>
           </div>
-          
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button 
-              onClick={() => setActiveTab('tiendas')}
-              style={{ padding: '0.8rem 1rem', textAlign: 'left', background: activeTab === 'tiendas' ? 'rgba(139, 92, 246, 0.2)' : 'transparent', border: 'none', borderRadius: 'var(--border-radius-sm)', color: '#fff', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
-            >
-              🏢 Red de Sucursales
-            </button>
-            <button 
-              onClick={() => setActiveTab('crear')}
-              style={{ padding: '0.8rem 1rem', textAlign: 'left', background: activeTab === 'crear' ? 'rgba(139, 92, 246, 0.2)' : 'transparent', border: 'none', borderRadius: 'var(--border-radius-sm)', color: '#fff', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
-            >
-              ➕ Asignar Nueva Sucursal
-            </button>
-          </nav>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        {/* Recent Activity */}
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', fontWeight: 700 }}>Actividad Reciente</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              { type: 'invite', user: 'carlos@tienda.com', desc: 'Suscripción de Distribuidor', time: 'hace 2 horas' },
+              { type: 'sale', user: 'Admin Norte', desc: 'Comisión generada $45.00', time: 'hace 5 horas' },
+              { type: 'auth', user: 'Root Admin', desc: 'Backup de seguridad completado', time: 'hace 1 día' },
+            ].map((item, id) => (
+              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.type === 'invite' ? '#3b82f6' : '#10b981' }}></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{item.user}</p>
+                  <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>{item.desc}</p>
+                </div>
+                <span style={{ fontSize: '0.7rem', opacity: 0.4 }}>{item.time}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* CONTENIDO SUPERADMIN DINÁMICO */}
-        <div className="glass-panel" style={{ flex: 1, padding: '2rem' }}>
-          
-          {/* TAB 1: Red de Tiendas (Listado General) */}
-          {activeTab === 'tiendas' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
-                <h2>Monitor de Distribuidores Activos</h2>
-                <div style={{ color: 'var(--text-muted)' }}>Total Licencias: <b style={{color: 'var(--accent-color)' }}>3</b></div>
+        {/* Global Commission Settings (Simulated) */}
+        <div className="glass-panel" style={{ padding: '2rem', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', fontWeight: 700 }}>Configuración Global</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', opacity: 0.7 }}>Comisión Base</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input type="range" style={{ flex: 1 }} defaultValue="15" />
+                <span style={{ fontWeight: 'bold' }}>15%</span>
               </div>
-              
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--glass-border)' }}>
-                    <th style={{ padding: '1rem' }}>ID Licencia</th>
-                    <th style={{ padding: '1rem' }}>Nombre Fiscal Tienda</th>
-                    <th style={{ padding: '1rem' }}>Comisión Acordada</th>
-                    <th style={{ padding: '1rem' }}>Estado Servidor</th>
-                    <th style={{ padding: '1rem' }}>Seguridad</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { id: 'STORE-001', name: 'Sanitaria Oro S.A.', comision: '15%', status: 'Activo' },
-                    { id: 'STORE-002', name: 'Clínicas Health', comision: '20%', status: 'Activo' },
-                    { id: 'STORE-003', name: 'Medellín Supplies', comision: '10%', status: 'Bloqueado' },
-                  ].map((row) => (
-                    <tr key={row.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '1rem', fontWeight: 'bold' }}>{row.id}</td>
-                      <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{row.name}</td>
-                      <td style={{ padding: '1rem' }}>{row.comision}</td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ padding: '0.4rem 0.8rem', background: row.status === 'Activo' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: row.status === 'Activo' ? '#4ade80' : '#f87171', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem' }}>
-                        <button style={{ background: 'transparent', border: '1px solid var(--accent-color)', color: 'var(--accent-color)', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', transition: 'var(--transition-smooth)' }} onMouseOver={e => {e.currentTarget.style.background='var(--accent-color)'; e.currentTarget.style.color='#fff'}}  onMouseOut={e => {e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--accent-color)'}}>Auditar</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          )}
-
-          {/* TAB 2: Creación de Tienda */}
-          {activeTab === 'crear' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
-                <h2>Apertura de Nuevo Distribuidor</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Ingresa los pactos comerciales y otorga un enlace de afiliación a un nuevo aliado.</p>
-              </div>
-              
-              <form style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '600px', marginTop: '2rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Franquicia / Nombre Sugerido</label>
-                  <input type="text" placeholder="Ej: Red de Farmacias Aliadas" required style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: 'var(--border-radius-sm)', color: '#fff', fontSize: '1rem', outline: 'none' }} />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Correo de Activación del Titular</label>
-                  <input type="email" placeholder="representante@farmacias.com" required style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: 'var(--border-radius-sm)', color: '#fff', fontSize: '1rem', outline: 'none' }} />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Tarifa de Ganancia Directa</label>
-                  <select defaultValue="15" style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--glass-border)', borderRadius: 'var(--border-radius-sm)', color: '#fff', fontSize: '1rem', cursor: 'pointer', outline: 'none' }}>
-                    <option value="10">10% - Vendedor Básico</option>
-                    <option value="15">15% - Distribuidor Autorizado</option>
-                    <option value="20">20% - Socio Premium</option>
-                  </select>
-                </div>
-
-                <div style={{ marginTop: '1.5rem', padding: '1.5rem', border: '1px dashed var(--accent-color)', borderRadius: 'var(--border-radius-sm)', background: 'rgba(139, 92, 246, 0.05)' }}>
-                  <p style={{ color: '#fff', fontSize: '0.9rem', lineHeight: '1.5' }}>💡 Al hacer clic, generaremos una licencia única temporal. El dueño de negocio deberá usar ese Token en la ruta oculta de <b style={{ color: 'var(--accent-color)' }}>Registro por Invitación</b> para heredar su infraestructura.</p>
-                </div>
-
-                <button 
-                  type="submit" 
-                  onClick={(e) => { e.preventDefault(); alert("¡Permisos de Tienda y Enlace de Activación creados exitosamente! Revisa tu correo administrador."); }}
-                  style={{ background: 'linear-gradient(135deg, var(--accent-color), var(--primary-color))', color: '#fff', fontSize: '1.1rem', padding: '1.25rem', width: '100%', border: 'none', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', fontWeight: 'bold', marginTop: '1rem', WebkitTextFillColor: '#fff' }}
-                >
-                  🚀 Generar Servidor de Tienda Virtual
-                </button>
-              </form>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.5rem', opacity: 0.7 }}>Mantenimiento Mensual</label>
+              <input type="text" defaultValue="$9.99" style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} />
             </div>
-          )}
-
+            <button style={{ padding: '1rem', borderRadius: '8px', background: 'var(--primary-color)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+              Actualizar Políticas
+            </button>
+          </div>
         </div>
       </div>
     </div>
