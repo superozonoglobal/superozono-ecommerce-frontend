@@ -14,6 +14,8 @@ export interface User {
   email: string;
   role: UserRole;
   active: boolean;
+  invitedBy?: string; // ID of the user who invited them
+  invitedByName?: string; // Name of the user who invited them
   createdAt?: string;
   updatedAt?: string;
 }

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth.service";
 import { storeService } from "@/services/store.service";
+import { productService } from "@/services/product.service";
 import { Store, User } from "@/types";
 import { 
   ResponsiveContainer, 
@@ -18,6 +19,7 @@ import {
   Pie, 
   Cell 
 } from 'recharts';
+import InventorySection from "@/components/admin/InventorySection";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -37,6 +39,7 @@ export default function AdminDashboard() {
 
   const [admins, setAdmins] = useState<User[]>([]);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   const totalGlobalRevenue = stores.length * 12500;
 
@@ -109,15 +112,19 @@ export default function AdminDashboard() {
         console.error("Error al obtener administradores:", err);
         setLoadingAdmins(false);
       });
+
+    productService.getAllProducts()
+      .then((data: any[]) => setAllProducts(data || []))
+      .catch((err: any) => console.error("Error fetching master products:", err));
   };
 
   useEffect(() => {
-    if (user?.rol === 'ROOT_ADMIN') {
+    if (user?.rol === 'ROOT_ADMIN' || user?.rol === 'ADMIN') {
       fetchStoresAndAdmins();
     }
   }, [user]);
 
-  if (!user || user.rol !== 'ROOT_ADMIN') return null;
+  if (!user || (user.rol !== 'ROOT_ADMIN' && user.rol !== 'ADMIN')) return null;
 
   const totalStores = stores.length;
   const totalAdminsCount = admins.filter(a => a.role === 'ADMIN').length;
@@ -223,6 +230,10 @@ export default function AdminDashboard() {
           <button onClick={() => { setActiveTab("overview"); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${activeTab === "overview" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}>
             <span className="material-symbols-outlined text-[22px]">dashboard</span>
             <span className="text-sm font-black tracking-tight">Vista Global</span>
+          </button>
+          <button onClick={() => { setActiveTab("inventories"); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${activeTab === "inventories" ? "bg-emerald-600 text-white shadow-xl shadow-emerald-600/20" : "text-on-surface-variant hover:bg-emerald-50 hover:text-emerald-700"}`}>
+            <span className="material-symbols-outlined text-[22px]">inventory_2</span>
+            <span className="text-sm font-black tracking-tight">Inventarios</span>
           </button>
         </nav>
         <div className="p-6 border-t border-outline-variant/10">
@@ -382,6 +393,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {activeTab === "inventories" && (
+           <InventorySection 
+             currentUser={user}
+             distributors={admins}
+             stores={stores}
+             allProducts={allProducts}
+             onBack={() => setActiveTab("overview")}
+           />
+        )}
+
+        {activeTab === "overview" && (
+          <>
         {/* Global Stores Table */}
         <section className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-lg overflow-hidden relative z-10">
           <div className="p-8 border-b border-outline-variant/5">
@@ -499,6 +522,8 @@ export default function AdminDashboard() {
             </table>
           </div>
         </section>
+        </>
+        )}
       </main>
 
       {/* SUCCESS MODAL */}

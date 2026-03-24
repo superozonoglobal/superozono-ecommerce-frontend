@@ -14,6 +14,12 @@ export const productService = {
     return response.data.data;
   },
 
+  // List All Products (Root Admin)
+  getAllProducts: async (): Promise<Product[]> => {
+    const response = await apiClient.get<ApiResponse<Product[]>>('/products');
+    return response.data.data;
+  },
+
   // Create Product
   createProduct: async (productData: {
     name: string;

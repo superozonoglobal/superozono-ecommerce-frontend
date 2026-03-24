@@ -11,6 +11,7 @@ export default function Header() {
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   return (
+    <>
     <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-surface-container">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
         {/* Brand Logo */}
@@ -71,30 +72,31 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="lg:hidden fixed inset-0 top-0 bg-white z-40 p-6 flex flex-col gap-8 pt-24"
-          >
-            <div className="flex flex-col gap-6">
-              <Link href="/" onClick={() => setIsOpen(false)} className="text-2xl font-black text-primary font-headline tracking-tighter">TIENDA</Link>
-              <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">SOLUCIONES</a>
-              <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">IMPACTO</a>
-            </div>
-            <div className="mt-auto pt-8 border-t border-surface-container flex flex-col gap-4">
-               <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-5 bg-surface-container-low rounded-3xl font-black text-xs uppercase tracking-widest text-primary">
-                  <span className="material-symbols-outlined">person</span> 
-                  MI CUENTA MAESTRA
-               </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </header>
+    {/* Mobile Menu Overlay */}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0, x: "100%" }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: "100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="lg:hidden fixed inset-0 bg-white z-[60] p-6 flex flex-col gap-8 pt-24"
+        >
+          <div className="flex flex-col gap-6">
+            <Link href="/" onClick={() => setIsOpen(false)} className="text-2xl font-black text-primary font-headline tracking-tighter">TIENDA</Link>
+            <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">SOLUCIONES</a>
+            <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">IMPACTO</a>
+          </div>
+          <div className="mt-auto pt-8 border-t border-surface-container flex flex-col gap-4">
+             <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-5 bg-surface-container-low rounded-3xl font-black text-xs uppercase tracking-widest text-primary">
+                <span className="material-symbols-outlined">person</span> 
+                MI CUENTA MAESTRA
+             </Link>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
