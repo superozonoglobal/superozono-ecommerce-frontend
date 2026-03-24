@@ -1,456 +1,748 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { storeService } from "@/services/store.service";
+import { productService } from "@/services/product.service";
+import { orderService } from "@/services/order.service";
+import { Store, Product, User } from "@/types";
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  BarChart, 
+  Bar, 
+  Cell 
+} from 'recharts';
 
-// Tipado para productos
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  stockReal: number;
-  stockShowroom: number;
-  icon: string;
-  active: boolean;
-}
-
-const STORAGE_KEY = 'superozono_store_config';
-
-export default function DistribuidorDashboardPage() {
-  const router = useRouter();
+export default function DistribuidorDashboard() {
+  const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview"); // overview, personalization, inventory
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
+  const [stores, setStores] = useState<Store[]>([]);
+  const [loadingStores, setLoadingStores] = useState(true);
+  const [activeStore, setActiveStore] = useState<Store | null>(null);
+
+  // Customization State
+  const [branding, setBranding] = useState({
+    primaryColor: '#286652',
+    secondaryColor: '#515f74',
+    logoUrl: '',
+    bannerUrl: ''
+  });
+
+  // Inventory & Orders State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const inventoryData = products.slice(0, 5).map(p => ({
+    name: p.name.length > 10 ? p.name.substring(0, 10) + '...' : p.name,
+    stock: p.quantity
+  }));
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    description: '',
+    sku: '',
+    category: '',
+    basePrice: 0,
+    quantity: 0
+  });
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const salesData = [
+    { name: 'Sem 1', sales: 400 },
+    { name: 'Sem 2', sales: 700 },
+    { name: 'Sem 3', sales: 600 },
+    { name: 'Sem 4', sales: 900 },
+  ];
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   useEffect(() => {
-    const user = api.users.getCurrentUser();
-    if (!user || user.role !== 'distribuidor') {
-      router.push('/login');
+    if (user?.rol === 'ADMIN' || user?.rol === 'DISTRIBUTOR') {
+      fetchStores();
     }
-  }, [router]);
+  }, [user]);
 
-  const [activeTab, setActiveTab] = useState('analiticas');
-  const [primaryColor, setPrimaryColor] = useState('#3b82f6');
-  const [accentColor, setAccentColor] = useState('#8b5cf6');
-  const [backgroundColor, setBackgroundColor] = useState('#0f172a');
-  const [logoBase64, setLogoBase64] = useState<string | null>(null);
-  const [showLogo, setShowLogo] = useState(true);
-  const [storeName, setStoreName] = useState('Distribuidora Sanitaria S.A.');
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  
-  // Productos simulados del backend
-  const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: 'Generador Pro 3000', price: 299, stockReal: 100, stockShowroom: 12, icon: '⚡', active: true },
-    { id: 2, name: 'Purificador Home XL', price: 149, stockReal: 50, stockShowroom: 4, icon: '🌬️', active: true },
-    { id: 3, name: 'Aqua Pure Sistema Médico', price: 499, stockReal: 20, stockShowroom: 2, icon: '💧', active: true },
-    { id: 4, name: 'Mini Portátil Car', price: 89, stockReal: 200, stockShowroom: 25, icon: '🚙', active: true },
-    { id: 5, name: 'Filtro Carbón Activo', price: 35, stockReal: 500, stockShowroom: 0, icon: '⚫', active: false },
-  ]);
-
-  // 1. CARGAR datos de LocalStorage al montar
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const config = JSON.parse(saved);
-        setPrimaryColor(config.primaryColor || '#3b82f6');
-        setAccentColor(config.accentColor || '#8b5cf6');
-        setBackgroundColor(config.backgroundColor || '#0f172a');
-        setLogoBase64(config.logoBase64 || null);
-        setShowLogo(config.showLogo !== undefined ? config.showLogo : true);
-        setStoreName(config.storeName || 'Distribuidora Sanitaria S.A.');
-        if (config.products) setProducts(config.products);
-      } catch (e) {
-        console.error("Error cargando configuración:", e);
+  const fetchStores = async () => {
+    setLoadingStores(true);
+    try {
+      const data = await storeService.listMyStores();
+      setStores(data || []);
+      if (data && data.length > 0) {
+        const store = data[0];
+        setActiveStore(store);
+        setBranding({
+          primaryColor: store.primaryColor || '#286652',
+          secondaryColor: store.secondaryColor || '#515f74',
+          logoUrl: store.logoUrl || '',
+          bannerUrl: store.bannerUrl || ''
+        });
+        // Initial fetch for the active tab if it's not personalization
+        if (activeTab === 'inventory') fetchProducts(store.id);
+        if (activeTab === 'orders') fetchOrders(store.id);
       }
+    } catch (err) {
+      console.error("Error fetching stores", err);
+      showToast("Error al cargar tiendas", "error");
+    } finally {
+      setLoadingStores(false);
     }
-  }, []);
+  };
 
-  // 2. GUARDAR datos automáticamente en LocalStorage (SIN afectar al DOM del panel)
+  const fetchProducts = async (storeId: string) => {
+    setLoadingProducts(true);
+    try {
+      const data = await productService.getStoreProducts(storeId);
+      setProducts(data || []);
+    } catch (err) {
+      console.error("Error fetching products", err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const fetchOrders = async (storeId: string) => {
+    setLoadingOrders(true);
+    try {
+      const data = await orderService.getStoreOrders(storeId);
+      setOrders(data || []);
+    } catch (err) {
+      console.error("Error fetching orders", err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
-    const config = { primaryColor, accentColor, backgroundColor, logoBase64, showLogo, storeName, products };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    // No aplicamos document.documentElement.style.setProperty aquí para no "ensuciar" el panel de admin
-  }, [primaryColor, accentColor, backgroundColor, logoBase64, showLogo, storeName, products]);
+    if (activeStore) {
+      if (activeTab === 'inventory') fetchProducts(activeStore.id);
+      if (activeTab === 'orders') fetchOrders(activeStore.id);
+    }
+  }, [activeTab, activeStore]);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("El archivo es muy pesado (máx 2MB)");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoBase64(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleUpdateBranding = async () => {
+    if (!activeStore) return;
+    setIsUpdating(true);
+    try {
+      await storeService.updateStore(activeStore.id, {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+        logoUrl: branding.logoUrl,
+        bannerUrl: branding.bannerUrl
+      });
+      showToast("Identidad visual actualizada", "success");
+      fetchStores();
+    } catch (error) {
+      console.error("Error updating branding", error);
+      showToast("Error al guardar cambios", "error");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const copyStoreLink = () => {
-    const link = `https://superozono.com/tienda/${storeName.toLowerCase().replace(/\s+/g, '-')}`;
-    navigator.clipboard.writeText(link);
-    alert('¡Enlace de tienda copiado al portapapeles!');
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeStore) return;
+    setIsUpdating(true);
+    try {
+      await productService.createProduct({
+        ...newProduct,
+        storeId: activeStore.id
+      });
+      showToast("Producto creado exitosamente", "success");
+      setShowProductModal(false);
+      setNewProduct({ name: '', description: '', sku: '', category: '', basePrice: 0, quantity: 0 });
+      fetchProducts(activeStore.id);
+    } catch (error) {
+      console.error("Error creating product", error);
+      showToast("Error al crear producto", "error");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleStockChange = (id: number, val: number) => {
-    setProducts(products.map(p => p.id === id ? { ...p, stockShowroom: val } : p));
-  };
-
-  const toggleProduct = (id: number) => {
-    setProducts(products.map(p => p.id === id ? { ...p, active: !p.active } : p));
-  };
+  if (!user || (user.rol !== 'ADMIN' && user.rol !== 'DISTRIBUTOR')) return null;
 
   return (
-    <div className="page-container dashboard-layout" style={{ maxWidth: '1400px' }}>
-      
-      {/* MODAL DE PREVISUALIZACIÓN FULL-SCREEN */}
-      {showPreviewModal && (
-        <div style={fullScreenOverlayStyle}>
-          <div style={{ position: 'absolute', top: '20px', right: '40px', zIndex: 1100, display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <span style={{ background: 'rgba(0,0,0,0.6)', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.8rem', backdropFilter: 'blur(10px)' }}>MODO PREVISUALIZACIÓN</span>
-            <button onClick={() => setShowPreviewModal(false)} style={exitPreviewButtonStyle}>Salir de Previa</button>
+    <div className="flex h-screen bg-surface relative font-sans overflow-hidden">
+      {/* Sidebar Overlay for Mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Verdant Style */}
+      <aside className={`fixed inset-y-0 left-0 w-72 bg-surface-container-lowest border-r border-outline-variant/5 flex flex-col shadow-2xl z-50 transition-transform duration-500 ease-spring lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-8 border-b border-outline-variant/5 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
+              <span className="material-symbols-outlined font-variation-fill">eco</span>
+            </div>
+            <div>
+              <h1 className="font-headline text-xl font-black text-on-surface tracking-tighter">SuperOzono</h1>
+              <p className="text-[10px] text-primary font-black tracking-widest uppercase opacity-70">{user.rol === 'ADMIN' ? 'ADMINISTRADOR' : 'DISTRIBUIDOR'}</p>
+            </div>
           </div>
-          <div style={{ width: '100%', height: '100%', background: '#fff' }}>
-             <iframe src="/" style={{ width: '100%', height: '100%', border: 'none' }} title="Preview"></iframe>
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <nav className="flex-1 p-6 space-y-3">
+          <button 
+            onClick={() => { setActiveTab("overview"); setIsSidebarOpen(false); }} 
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all group ${activeTab === "overview" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}
+          >
+            <span className="material-symbols-outlined text-[20px]">dashboard</span>
+            <span className="text-sm font-black tracking-tight">Vista General</span>
+          </button>
+          
+          <button 
+            onClick={() => { setActiveTab("personalization"); setIsSidebarOpen(false); }} 
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all group ${activeTab === "personalization" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}
+          >
+            <span className="material-symbols-outlined text-[20px]">palette</span>
+            <span className="text-sm font-black tracking-tight">Personalización</span>
+          </button>
+
+          <button 
+            onClick={() => { setActiveTab("inventory"); setIsSidebarOpen(false); }} 
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all group ${activeTab === "inventory" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}
+          >
+            <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+            <span className="text-sm font-black tracking-tight">Inventario</span>
+          </button>
+
+          <button 
+            onClick={() => { setActiveTab("orders"); setIsSidebarOpen(false); }} 
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all group ${activeTab === "orders" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}
+          >
+            <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
+            <span className="text-sm font-black tracking-tight">Órdenes</span>
+          </button>
+        </nav>
+
+        <div className="p-6 border-t border-outline-variant/5">
+          <div className="flex items-center gap-4 p-4 rounded-3xl bg-surface-container-low mb-4 border border-outline-variant/5">
+            <div className="w-12 h-12 rounded-2xl bg-secondary text-on-secondary flex items-center justify-center font-black text-xl shadow-inner">
+              {user.nombre.charAt(0)}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-sm font-black text-on-surface leading-tight truncate">{user.nombre}</p>
+              <p className="text-[10px] text-on-surface-variant font-bold opacity-60 uppercase tracking-widest truncate">{user.email}</p>
+            </div>
+          </div>
+          <button onClick={logout} className="flex w-full items-center justify-center gap-2 py-4 bg-surface-container-lowest text-error rounded-[20px] font-black text-[10px] tracking-[0.2em] uppercase border border-error/20 hover:bg-error/5 transition-all active:scale-95">
+            <span className="material-symbols-outlined text-sm">logout</span> Cerrar Sesión
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 overflow-y-auto bg-surface relative z-10">
+        <div className="lg:hidden p-6 border-b border-outline-variant/5 flex justify-between items-center bg-surface-container-lowest sticky top-0 z-30 shadow-sm">
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="w-12 h-12 flex items-center justify-center bg-surface-container border border-outline-variant/10 rounded-2xl text-on-surface active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary text-xs shadow-md">
+              <span className="material-symbols-outlined text-sm font-variation-fill">eco</span>
+            </div>
+            <span className="font-headline font-black text-sm tracking-tight">SuperOzono</span>
+          </div>
+        </div>
+        {loadingStores ? (
+          <div className="h-full flex flex-col items-center justify-center gap-4 animate-pulse">
+            <span className="material-symbols-outlined text-6xl text-primary animate-spin">refresh</span>
+            <p className="text-sm font-black text-on-surface-variant uppercase tracking-widest italic">Sincronizando Tienda...</p>
+          </div>
+        ) : !activeStore ? (
+          <div className="h-full flex flex-col items-center justify-center p-12 text-center max-w-2xl mx-auto space-y-8">
+            <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center shadow-inner">
+              <span className="material-symbols-outlined text-5xl text-primary opacity-40">store_off</span>
+            </div>
+            <div className="space-y-2">
+              <h2 className="font-headline text-4xl font-black text-on-surface tracking-tighter">Sin Tienda Asignada.</h2>
+              <p className="text-on-surface-variant font-medium text-lg leading-relaxed">Tu cuenta de distribuidor aún no tiene una tienda configurada. Contacta al administrador central para activarla.</p>
+            </div>
+            <Link href="/" className="px-10 py-4 bg-on-surface text-surface rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shadow-2xl shadow-black/20">Regresar al Inicio</Link>
+          </div>
+        ) : (
+          <div className="p-8 lg:p-12 space-y-12">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/5 pb-10">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase rounded-full">Tienda Activa</span>
+                  <p className="text-[10px] text-on-surface-variant font-black tracking-[0.1em] opacity-40">ID: {activeStore.id.split('-')[0]}</p>
+                </div>
+                <h2 className="font-headline text-5xl font-black text-on-surface tracking-tighter">{activeStore.name}</h2>
+                <div className="flex items-center gap-2 text-primary font-bold text-sm bg-surface-container rounded-lg px-3 py-1.5 w-fit border border-primary/5">
+                  <span className="material-symbols-outlined text-sm">link</span>
+                  <span>{activeStore.subdomain}.superozono.com</span>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <a 
+                  href={`#`} 
+                  onClick={(e) => {
+                     e.preventDefault();
+                     navigator.clipboard.writeText(`https://${activeStore.subdomain}.superozono.com`);
+                     showToast("Link copiado al portapapeles", "success");
+                  }}
+                  className="flex items-center gap-2 px-6 py-3.5 bg-surface-container-high text-on-surface rounded-2xl text-sm font-black tracking-tight shadow-sm hover:bg-surface-container-highest transition-all"
+                >
+                  <span className="material-symbols-outlined text-[18px]">share</span> COMPARTIR ENLACE
+                </a>
+                <a 
+                  href={`https://${activeStore.subdomain}.superozono.com`} 
+                  target="_blank"
+                  className="flex items-center gap-2 px-6 py-3.5 bg-on-surface text-surface rounded-2xl text-sm font-black tracking-tight shadow-xl hover:scale-105 transition-all active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[18px]">visibility</span> VER TIENDA PÚBLICA
+                </a>
+              </div>
+            </header>
+
+            {activeTab === "overview" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <span className="material-symbols-outlined text-primary">payments</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Ventas (Este Mes)</p>
+                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">${orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0).toFixed(2)}</h3>
+                  </div>
+                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-secondary/5 flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
+                      <span className="material-symbols-outlined text-secondary">shopping_cart</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Pedidos Totales</p>
+                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">{orders.length}</h3>
+                  </div>
+                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-tertiary/5 flex items-center justify-center group-hover:bg-tertiary/10 transition-colors">
+                      <span className="material-symbols-outlined text-tertiary">inventory_2</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Productos</p>
+                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">{products.length}</h3>
+                  </div>
+                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-error/5 flex items-center justify-center group-hover:bg-error/10 transition-colors">
+                      <span className="material-symbols-outlined text-error">trending_up</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Popularidad</p>
+                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">--</h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Sales Trend Chart */}
+                  <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/10 shadow-xl overflow-hidden relative group">
+                    <div className="flex justify-between items-center mb-10">
+                      <div>
+                        <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">Tendencia de Ventas</h4>
+                        <p className="text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase mt-1">Ingresos por semana en {activeStore.name}</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-primary">trending_up</span>
+                      </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={salesData}>
+                          <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#286652" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#286652" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                          />
+                          <Tooltip 
+                            contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="sales" 
+                            stroke="#286652" 
+                            strokeWidth={4} 
+                            fillOpacity={1} 
+                            fill="url(#colorSales)" 
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Stock Bar Chart */}
+                  <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/10 shadow-xl overflow-hidden relative group">
+                    <div className="flex justify-between items-center mb-10">
+                      <div>
+                        <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">Niveles de Stock</h4>
+                        <p className="text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase mt-1">Principales productos en inventario</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-2xl bg-secondary/5 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-secondary">inventory</span>
+                      </div>
+                    </div>
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={inventoryData}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                            dy={10}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                          />
+                          <Tooltip 
+                            cursor={{fill: 'transparent'}}
+                            contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
+                          />
+                          <Bar dataKey="stock" fill="#515f74" radius={[10, 10, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "inventory" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Inventario de Productos</h3>
+                  <button onClick={() => setShowProductModal(true)} className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-2xl text-sm font-black tracking-tight shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95">
+                    <span className="material-symbols-outlined">add</span> NUEVO PRODUCTO
+                  </button>
+                </div>
+                
+                <section className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/60">
+                      <tr>
+                        <th className="px-8 py-5 text-left">Producto</th>
+                        <th className="px-8 py-5 text-left">SKU</th>
+                        <th className="px-8 py-5 text-left">Precio</th>
+                        <th className="px-8 py-5 text-left">Stock</th>
+                        <th className="px-8 py-5 text-left">Estado</th>
+                        <th className="px-8 py-5 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/5">
+                      {loadingProducts ? (
+                        <tr><td colSpan={6} className="p-20 text-center text-on-surface-variant font-bold">Cargando inventario...</td></tr>
+                      ) : products.length === 0 ? (
+                        <tr><td colSpan={6} className="p-20 text-center text-on-surface-variant font-bold opacity-50">No hay productos en esta tienda.</td></tr>
+                      ) : products.map(product => (
+                        <tr key={product.id} className="hover:bg-primary/[0.02] transition-colors group">
+                          <td className="px-8 py-6 font-black text-on-surface">{product.name}</td>
+                          <td className="px-8 py-6 text-sm font-bold opacity-60 font-mono">{product.sku}</td>
+                          <td className="px-8 py-6 text-sm font-black text-primary">${product.basePrice}</td>
+                          <td className="px-8 py-6 text-sm font-bold">{product.quantity}</td>
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${product.status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant/60'}`}>
+                              {product.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button className="p-3 text-secondary hover:bg-secondary/10 rounded-2xl transition-all">
+                              <span className="material-symbols-outlined">edit</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              </div>
+            )}
+
+            {activeTab === "orders" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Historial de Ventas</h3>
+                
+                <section className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/60">
+                      <tr>
+                        <th className="px-8 py-5 text-left">Pedido ID</th>
+                        <th className="px-8 py-5 text-left">Cliente</th>
+                        <th className="px-8 py-5 text-left">Total</th>
+                        <th className="px-8 py-5 text-left">Estado</th>
+                        <th className="px-8 py-5 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/5">
+                      {loadingOrders ? (
+                        <tr><td colSpan={5} className="p-20 text-center text-on-surface-variant font-bold">Consultando registros...</td></tr>
+                      ) : orders.length === 0 ? (
+                        <tr><td colSpan={5} className="p-20 text-center text-on-surface-variant font-bold opacity-50">Sin actividad de ventas aún.</td></tr>
+                      ) : orders.map(order => (
+                        <tr key={order.id} className="hover:bg-secondary/[0.02] transition-colors group">
+                          <td className="px-8 py-6 font-mono text-xs opacity-60">#{order.id.split('-')[0]}</td>
+                          <td className="px-8 py-6">
+                            <p className="font-black text-on-surface">{order.customerName}</p>
+                            <p className="text-[10px] text-on-surface-variant opacity-40 font-bold">{order.customerEmail}</p>
+                          </td>
+                          <td className="px-8 py-6 text-sm font-black text-secondary">${order.totalPrice}</td>
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${order.status === 'PAID' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant/60'}`}>
+                              {order.status === 'PAID' ? 'PAGADO' : 'PENDIENTE'}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button className="p-3 text-primary hover:bg-primary/10 rounded-2xl transition-all">
+                              <span className="material-symbols-outlined">visibility</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              </div>
+            )}
+
+            {activeTab === "personalization" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid grid-cols-12 gap-12">
+                {/* Branding Form */}
+                <div className="col-span-12 lg:col-span-5 space-y-10">
+                  <section className="bg-surface-container-lowest p-10 rounded-[40px] border border-outline-variant/10 shadow-sm space-y-8">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-[28px]">palette</span>
+                      </div>
+                      <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter">Identidad Visual</h3>
+                    </div>
+
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Color Primario (Marca)</label>
+                        <div className="flex items-center gap-4">
+                          <input 
+                            type="color" 
+                            value={branding.primaryColor} 
+                            onChange={e => setBranding({...branding, primaryColor: e.target.value})}
+                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-surface shadow-lg overflow-hidden flex-shrink-0"
+                          />
+                          <input 
+                            type="text" 
+                            value={branding.primaryColor} 
+                            onChange={e => setBranding({...branding, primaryColor: e.target.value})}
+                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold font-mono text-on-surface"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Color Secundario (Acentos)</label>
+                        <div className="flex items-center gap-4">
+                          <input 
+                            type="color" 
+                            value={branding.secondaryColor} 
+                            onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
+                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-surface shadow-lg overflow-hidden flex-shrink-0"
+                          />
+                          <input 
+                            type="text" 
+                            value={branding.secondaryColor} 
+                            onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
+                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold font-mono text-on-surface"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Logotipo Comercial</label>
+                        <div className="mt-4 border-2 border-dashed border-outline-variant/30 rounded-3xl p-10 text-center bg-surface-container-low/50 hover:bg-surface-container-low transition-all cursor-pointer group shadow-inner">
+                          <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 group-hover:text-primary transition-colors mb-4">upload_file</span>
+                          <p className="text-sm font-black text-on-surface opacity-80 uppercase tracking-tight">Seleccionar Imagen...</p>
+                          <p className="text-[10px] text-on-surface-variant mt-2 font-bold opacity-40">SVG, PNG o WEBP (Máx 2MB)</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={handleUpdateBranding}
+                      disabled={isUpdating}
+                      className="w-full py-5 bg-on-surface text-surface rounded-[24px] font-black text-sm tracking-widest uppercase hover:scale-[1.02] transition-all active:scale-95 shadow-2xl disabled:opacity-50"
+                    >
+                      {isUpdating ? 'GUARDANDO...' : 'GUARDAR IDENTIDAD'}
+                    </button>
+                  </section>
+                </div>
+
+                {/* Preview Column */}
+                <div className="col-span-12 lg:col-span-7 space-y-6">
+                  <div className="sticky top-12">
+                    <div className="flex items-center justify-between mb-4 px-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Previsualización en Vivo</p>
+                      <div className="flex gap-2">
+                         <div className="w-2 h-2 rounded-full bg-error/20"></div>
+                         <div className="w-2 h-2 rounded-full bg-secondary/20"></div>
+                         <div className="w-2 h-2 rounded-full bg-primary/20"></div>
+                      </div>
+                    </div>
+                    {/* Mockup Frame */}
+                    <div className="bg-surface-container-highest rounded-[48px] p-2 shadow-2xl border border-white/40 overflow-hidden ring-1 ring-black/5">
+                      <div className="bg-surface-container-lowest rounded-[40px] overflow-hidden min-h-[650px] flex flex-col relative scale-100 origin-top">
+                        {/* Mockup Top Nav */}
+                        <div className="px-8 py-5 flex justify-between items-center bg-white border-b border-surface-container">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-xl" style={{ backgroundColor: branding.primaryColor }}>
+                               <span className="material-symbols-outlined text-sm font-variation-fill">eco</span>
+                            </div>
+                            <span className="font-headline font-black text-xs tracking-tighter uppercase">{activeStore.name}</span>
+                          </div>
+                          <div className="flex gap-6 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
+                            <span className="text-on-surface" style={{ color: branding.primaryColor }}>Inicio</span>
+                            <span>Catálogo</span>
+                            <span>Nosotros</span>
+                          </div>
+                        </div>
+
+                        {/* Mockup Hero */}
+                        <div className="relative h-60 overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent z-10"></div>
+                          <img 
+                            src="https://images.unsplash.com/photo-1582560475093-ba66accbc424?q=80&w=2000&auto=format&fit=crop" 
+                            className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-[20s] hover:scale-125"
+                            alt="Plant background"
+                          />
+                          <div className="absolute inset-0 z-20 flex flex-col justify-center p-10 text-white space-y-4">
+                            <h4 className="text-4xl font-black leading-[0.9] tracking-tighter max-w-xs">TECNOLOGÍA EN OXIGENACIÓN.</h4>
+                            <button className="px-8 py-3 w-fit text-black font-black text-[10px] tracking-widest uppercase rounded-full shadow-2xl hover:scale-110 transition-all" style={{ backgroundColor: branding.primaryColor, color: '#ffffff' }}>EXPLORAR PRODUCTOS</button>
+                          </div>
+                        </div>
+
+                        {/* Mockup Grid */}
+                        <div className="p-10 flex-1 bg-surface-container-low/30 grid grid-cols-2 gap-6">
+                          {[1, 2].map(i => (
+                            <div key={i} className="space-y-4 group">
+                              <div className="aspect-[4/5] bg-white rounded-[32px] overflow-hidden shadow-sm border border-outline-variant/10 p-2">
+                                <div className="w-full h-full bg-surface-container rounded-[24px] flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity overflow-hidden">
+                                   <img src={`https://images.unsplash.com/photo-1542156822-6924d1a71ace?q=80&w=500&auto=format&fit=crop`} className="w-full h-full object-cover" alt="Product" />
+                                </div>
+                              </div>
+                              <div className="px-2 space-y-1">
+                                <div className="h-4 w-3/4 bg-on-surface/5 rounded-full"></div>
+                                <div className="h-3 w-1/2 bg-on-surface/5 rounded-full opacity-40"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Mockup Sticky Badge */}
+                        <div className="absolute bottom-6 right-6 z-30 flex items-center gap-3 px-5 py-3 rounded-full bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl group cursor-pointer hover:bg-white/60 transition-all">
+                           <div className="w-3 h-3 rounded-full animate-ping" style={{ backgroundColor: branding.primaryColor }}></div>
+                           <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Tienda en Vivo</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* NEW PRODUCT MODAL */}
+      {showProductModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-surface-container-lowest w-full max-w-lg rounded-[48px] shadow-2xl overflow-hidden border border-outline-variant/10 animate-in fade-in zoom-in duration-300">
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-primary/[0.02]">
+              <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Nuevo Producto</h3>
+              <button onClick={() => setShowProductModal(false)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-error/10 hover:text-error transition-all">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleCreateProduct} className="p-10 space-y-6">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Nombre del Producto</label>
+                 <input required type="text" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Ej: Camiseta Premium" />
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">SKU</label>
+                   <input required type="text" value={newProduct.sku} onChange={e => setNewProduct({...newProduct, sku: e.target.value})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="PROD-001" />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Categoría</label>
+                   <input required type="text" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="Ropa" />
+                 </div>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Precio Base</label>
+                   <input required type="number" step="0.01" value={newProduct.basePrice} onChange={e => setNewProduct({...newProduct, basePrice: parseFloat(e.target.value)})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="0.00" />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Stock Inicial</label>
+                   <input required type="number" value={newProduct.quantity} onChange={e => setNewProduct({...newProduct, quantity: parseInt(e.target.value)})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="0" />
+                 </div>
+               </div>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Descripción</label>
+                 <textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-5 text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all h-24" placeholder="Detalles del producto..."></textarea>
+               </div>
+               <div className="pt-6">
+                 <button disabled={isUpdating} type="submit" className="w-full py-5 bg-on-surface text-surface rounded-[24px] font-black text-xs tracking-[0.2em] uppercase hover:scale-[1.02] transition-all active:scale-95 shadow-2xl disabled:opacity-50">
+                    {isUpdating ? 'CREANDO...' : 'REGISTRAR PRODUCTO'}
+                 </button>
+               </div>
+            </form>
           </div>
         </div>
       )}
 
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Panel de Control - Administrador de Tienda</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            onClick={() => setShowPreviewModal(true)} 
-            style={{ background: 'var(--accent-color)', border: 'none', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: 'var(--border-radius-sm)', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            👁️ Ver Previa Full-Screen
-          </button>
-          <div className="glass-panel" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>URL Pública:</span>
-            <code style={{ background: 'rgba(0,0,0,0.3)', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem' }}>
-              /tienda/{storeName.toLowerCase().replace(/\s+/g, '-')}
-            </code>
-            <button onClick={copyStoreLink} style={{ background: 'var(--primary-color)', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>
-              Copiar
-            </button>
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-8 duration-500">
+          <div className={`px-8 py-4 rounded-[24px] shadow-2xl flex items-center gap-4 border-2 ${toast.type === 'success' ? 'bg-primary text-on-primary border-primary/20 shadow-primary/20' : 'bg-error text-on-error border-error/20 shadow-error/20'}`}>
+            <span className="material-symbols-outlined text-2xl">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
+            <p className="text-sm font-black tracking-tight uppercase leading-none">{toast.message}</p>
           </div>
         </div>
-      </header>
-      
-      <div style={{ display: 'flex', gap: '2rem', minHeight: '700px' }}>
-        
-        {/* SIDEBAR */}
-        <div className="glass-panel" style={{ width: '280px', height: 'fit-content', padding: '1.5rem 1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: logoBase64 ? 'transparent' : `linear-gradient(135deg, ${primaryColor}, ${accentColor})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-              {logoBase64 && showLogo ? <img src={logoBase64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Logo" /> : (showLogo ? '🚀' : 'S')}
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <p style={{ fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{storeName}</p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Membresía: Premium</p>
-            </div>
-          </div>
-          
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => setActiveTab('analiticas')} style={tabButtonStyle(activeTab === 'analiticas')}>📈 Analíticas</button>
-            <button onClick={() => setActiveTab('productos')} style={tabButtonStyle(activeTab === 'productos')}>🏷️ Mi Catálogo</button>
-            <button onClick={() => setActiveTab('personalizacion')} style={tabButtonStyle(activeTab === 'personalizacion')}>🎨 Personalización</button>
-            <button onClick={() => setActiveTab('pagos')} style={tabButtonStyle(activeTab === 'pagos')}>💳 Métodos de Pago</button>
-            <button onClick={() => setActiveTab('perfil')} style={tabButtonStyle(activeTab === 'perfil')}>⚙️ Perfil</button>
-          </nav>
-        </div>
-
-        {/* CONTENIDO PRINCIPAL */}
-        <div className="glass-panel" style={{ flex: 1, padding: '2rem' }}>
-          
-          {/* ANALÍTICAS */}
-          {activeTab === 'analiticas' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h2 style={{ marginBottom: '1.5rem' }}>Resumen de Rendimiento</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-                <StatCard title="Ventas del Mes" value="$12,450" change="+15%" icon="💰" />
-                <StatCard title="Pedidos Pendientes" value="8" change="-2" icon="📦" />
-                <StatCard title="Visitas a Tienda" value="1,240" change="+30%" icon="👥" />
-              </div>
-              
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '2rem', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)' }}>
-                <h3 style={{ marginBottom: '1rem' }}>Ventas Semanales</h3>
-                <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '10px', justifyContent: 'space-around', padding: '10px' }}>
-                  {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-                    <div key={i} style={{ width: '30px', height: `${h}%`, background: `linear-gradient(to top, var(--primary-color), var(--accent-color))`, borderRadius: '4px 4px 0 0', position: 'relative' }}>
-                      <span style={{ position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.7rem' }}>${h*10}</span>
-                      <span style={{ position: 'absolute', bottom: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.7rem', color: 'var(--text-muted)' }}>{['L','M','Mi','J','V','S','D'][i]}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PERSONALIZACIÓN */}
-          {activeTab === 'personalizacion' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h2 style={{ marginBottom: '1.5rem' }}>Personalización de Marca Avanzada</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem' }}>
-                <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)' }}>
-                  
-                  {/* LOGO UPLOAD */}
-                  <div style={{ marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Identidad (Logo)</h3>
-                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                       <div style={{ width: '80px', height: '80px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '2px dashed var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          {logoBase64 ? <img src={logoBase64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Logo" /> : '🖼️'}
-                       </div>
-                       <div>
-                          <input type="file" accept="image/*" onChange={handleLogoUpload} id="logo-input" style={{ display: 'none' }} />
-                          <label htmlFor="logo-input" style={{ background: 'var(--primary-color)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem', display: 'inline-block', marginBottom: '0.5rem' }}>Subir Logo Imagen</label>
-                          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Mínimo 200x200px. Máximo 2MB.</p>
-                       </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                      <input type="checkbox" checked={showLogo} onChange={() => setShowLogo(!showLogo)} id="logo-toggle" />
-                      <label htmlFor="logo-toggle" style={{ cursor: 'pointer' }}>Mostrar Logo en Tienda</label>
-                    </div>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>Paleta de Colores</h3>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div>
-                      <label style={labelStyle}>Color Principal</label>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} style={colorInputStyle} />
-                        <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} style={{ ...inputStyle, width: '100px', padding: '0.4rem' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Color de Acento</label>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} style={colorInputStyle} />
-                        <input type="text" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} style={{ ...inputStyle, width: '100px', padding: '0.4rem' }} />
-                      </div>
-                    </div>
-                    <div style={{ gridColumn: 'span 2' }}>
-                      <label style={labelStyle}>Color de Fondo (Dashboard & Tienda)</label>
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} style={{ ...colorInputStyle, width: '100px' }} />
-                        <input type="text" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} style={{ ...inputStyle, width: '120px', padding: '0.4rem' }} />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Esto cambiará el tono azul base de toda la interfaz.</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', border: `2px solid ${primaryColor}` }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Vista Rápida</h3>
-                  <div style={{ background: backgroundColor, padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', position: 'relative', overflow: 'hidden' }}>
-                    {/* Simular gradiente radial */}
-                    <div style={{ position: 'absolute', top: '-20px', left: '-20px', width: '60px', height: '60px', background: primaryColor, opacity: 0.2, filter: 'blur(20px)' }}></div>
-                    
-                    <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.5rem', position: 'relative', zIndex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        {logoBase64 && showLogo ? <img src={logoBase64} style={{ width: '20px', height: '20px' }} alt="mini-logo" /> : (showLogo ? '🚀' : null)}
-                        <span style={{ fontWeight: 'bold', color: primaryColor, fontSize: '0.8rem' }}>SuperOzono</span>
-                      </div>
-                    </header>
-                    <div style={{ height: '40px', background: primaryColor, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>ESTILO APLICADO</div>
-                    <p style={{ fontSize: '0.7rem', marginTop: '1rem', color: 'var(--text-muted)' }}>Toda la tonalidad visual se ha sincronizado.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* CATÁLOGO / INVENTARIO */}
-          {activeTab === 'productos' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h2>Gestión de Inventario y Visibilidad</h2>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Sincronizado con Almacén Central: <b style={{ color: '#4ade80' }}>OK</b></div>
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                {products.map((p) => (
-                  <div key={p.id} style={{ 
-                    padding: '1.5rem', 
-                    background: 'rgba(0,0,0,0.3)', 
-                    borderRadius: 'var(--border-radius-sm)', 
-                    border: `1px solid ${p.active ? 'var(--glass-border)' : 'rgba(255,255,255,0.05)'}`,
-                    opacity: p.active ? 1 : 0.6
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '2rem' }}>{p.icon}</span>
-                      <button 
-                        onClick={() => toggleProduct(p.id)}
-                        style={{ 
-                          padding: '0.3rem 0.6rem', 
-                          borderRadius: '12px', 
-                          border: 'none', 
-                          fontSize: '0.7rem', 
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          background: p.active ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255,255,255,0.1)',
-                          color: p.active ? '#4ade80' : '#fff'
-                        }}
-                      >
-                        {p.active ? '● Visible' : '○ Oculto'}
-                      </button>
-                    </div>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>{p.name}</h3>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.85rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-                        <span>Precio Público:</span> <b>${p.price}</b>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
-                        <span>Stock Real (Admin):</span> <span>{p.stockReal} Uds</span>
-                      </div>
-                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.8rem', borderRadius: '4px' }}>
-                        <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.4rem', color: 'var(--accent-color)' }}>Stock para Clientes:</label>
-                        <input 
-                           type="number" 
-                           value={p.stockShowroom} 
-                           onChange={(e) => handleStockChange(p.id, parseInt(e.target.value))}
-                           style={{ width: '100%', background: 'transparent', border: '1px solid var(--glass-border)', color: '#fff', padding: '0.3rem' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* PAGOS */}
-          {activeTab === 'pagos' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h2 style={{ marginBottom: '1.5rem' }}>Vías de Recaudación</h2>
-              <div style={{ maxWidth: '600px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <PaymentMethod name="Transferencia Manual" desc="Bancos nacionales e internacionales." active={true} />
-                  <PaymentMethod name="Pasarela OzonoPay" desc="Procesamiento nativo seguro." active={false} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PERFIL */}
-          {activeTab === 'perfil' && (
-            <div style={{ animation: 'fadeIn 0.3s' }}>
-              <h2 style={{ marginBottom: '1.5rem' }}>Configuración Autorizada</h2>
-              <form style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '600px', marginTop: '2rem' }}>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={labelStyle}>Razón Social / Nombre Comercial</label>
-                  <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} style={inputStyle} />
-                </div>
-                <button type="button" className="login-btn" style={{ gridColumn: 'span 2', marginTop: '1rem', padding: '1rem' }}>Guardar Cambios</button>
-              </form>
-            </div>
-          )}
-
-        </div>
-      </div>
+      )}
     </div>
   );
 }
-
-// Estilos Modal / Preview
-const fullScreenOverlayStyle: React.CSSProperties = {
-  position: 'fixed' as const,
-  top: 0, left: 0, right: 0, bottom: 0,
-  background: '#000',
-  zIndex: 1000,
-  display: 'flex',
-  flexDirection: 'column' as const,
-  animation: 'fadeIn 0.3s ease-out'
-};
-
-const exitPreviewButtonStyle: React.CSSProperties = {
-  background: '#ef4444',
-  border: 'none',
-  color: '#fff',
-  padding: '0.6rem 1.2rem',
-  borderRadius: '20px',
-  cursor: 'pointer',
-  fontWeight: 'bold',
-  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-  transition: 'transform 0.2s'
-};
-
-const modalOverlayStyle: React.CSSProperties = {
-  position: 'fixed' as const,
-  top: 0, left: 0, right: 0, bottom: 0,
-  background: 'rgba(0,0,0,0.85)',
-  backdropFilter: 'blur(8px)',
-  zIndex: 1000,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '2rem'
-};
-
-const modalContentStyle: React.CSSProperties = {
-  width: '95%',
-  height: '90%',
-  maxWidth: '1200px',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  padding: '1.5rem',
-  background: 'var(--bg-dark)',
-  border: '1px solid var(--glass-border)'
-};
-
-const closeButtonStyle: React.CSSProperties = {
-  background: '#ef4444',
-  border: 'none',
-  color: '#fff',
-  padding: '0.5rem 1rem',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontWeight: 'bold'
-};
-
-// Componentes y Estilos anteriores
-function StatCard({ title, value, change, icon }: any) {
-  return (
-    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{title}</p>
-        <h3 style={{ fontSize: '1.5rem' }}>{value}</h3>
-        <p style={{ fontSize: '0.75rem', color: change.startsWith('+') ? '#4ade80' : '#f87171', marginTop: '0.3rem' }}>{change}</p>
-      </div>
-      <div style={{ fontSize: '2rem', opacity: 0.8 }}>{icon}</div>
-    </div>
-  );
-}
-
-function PaymentMethod({ name, desc, active }: any) {
-  return (
-    <div style={{ padding: '1rem', border: `1px solid ${active ? 'var(--primary-color)' : 'var(--glass-border)'}`, borderRadius: 'var(--border-radius-sm)', background: active ? 'rgba(59, 130, 246, 0.1)' : 'rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div>
-        <h4 style={{ fontSize: '1rem', marginBottom: '0.2rem' }}>{name}</h4>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{desc}</p>
-      </div>
-      <button style={{ background: active ? 'var(--primary-color)' : 'transparent', border: '1px solid var(--glass-border)', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '4px' }}>
-        {active ? 'Configurado' : 'Activar'}
-      </button>
-    </div>
-  );
-}
-
-const tabButtonStyle = (isActive: boolean) => ({
-  padding: '0.8rem 1rem',
-  textAlign: 'left' as const,
-  background: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-  border: 'none',
-  borderRadius: 'var(--border-radius-sm)',
-  color: isActive ? '#fff' : 'var(--text-muted)',
-  cursor: 'pointer',
-  transition: 'var(--transition-smooth)',
-  fontWeight: isActive ? 'bold' : 'normal'
-});
-
-const labelStyle = { display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontWeight: 'bold' as const, fontSize: '0.9rem' };
-const inputStyle = { width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', borderRadius: 'var(--border-radius-sm)', color: '#fff', fontSize: '1rem' };
-const colorInputStyle = { width: '50px', height: '50px', border: 'none', borderRadius: '8px', cursor: 'pointer', background: 'transparent' };
-

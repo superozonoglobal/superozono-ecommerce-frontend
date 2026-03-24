@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verdant Modernist | Store Customization</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#d5e3fc",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-tertiary-fixed": "#410004",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "on-surface-variant": "#3d4a42",
+                        "primary": "#286652",
+                        "secondary-fixed-dim": "#b9c7df",
+                        "tertiary-fixed-dim": "#ffb3ae",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-fixed": "#ffdad7",
+                        "outline": "#6d7a72",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7f9fb",
+                        "surface-tint": "#2b6954",
+                        "on-secondary-fixed-variant": "#3a485b",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary-fixed-variant": "#7f2928",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#f5fff8",
+                        "on-background": "#191c1e",
+                        "background": "#f7f9fb",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#002117",
+                        "surface-container": "#eceef0",
+                        "primary-fixed-dim": "#95d3ba",
+                        "on-secondary-container": "#57657a",
+                        "tertiary-container": "#ba5551",
+                        "on-surface": "#191c1e",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bccac0",
+                        "tertiary": "#9b3e3b",
+                        "primary-container": "#43806a",
+                        "surface-dim": "#d8dadc",
+                        "secondary": "#515f74",
+                        "inverse-primary": "#95d3ba",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-fixed": "#b0f0d6"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-background min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-transparent bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-xl shadow-slate-200/50 z-50">
+<div class="flex flex-col h-full p-4">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-container rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-emerald-900 leading-none">Verdant Admin</h1>
+<p class="text-[10px] uppercase tracking-widest text-outline mt-1">Ozone Management</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-emerald-600 transition-colors font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-emerald-600 transition-colors font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Users
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-emerald-600 transition-colors font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                    Inventory
+                </a>
+<!-- Active State: Storefront (Implicit mapping from user prompt) -->
+<a class="flex items-center gap-3 px-4 py-3 text-emerald-700 bg-emerald-50/50 rounded-lg font-bold font-manrope text-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">storefront</span>
+                    Storefront
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-emerald-600 transition-colors font-manrope text-sm font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-3">
+<img alt="User Profile Avatar" class="w-10 h-10 rounded-full object-cover" data-alt="Professional male corporate executive portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcXBeubrovRY4GjVIDMwb5X2EjyowtPQ8W14RB1E4okt4CWNNvJVQlPdZ-JsN6LC7EKG7kF_Stpe4-y6DzqAAR1wMHV0CA_tBSEz0zZ3irlw9KzqZwJrhgGcxfVxlN9e_fRD-ES2xFc7tMLtK7MFJVcLodhEGcm8Xx5JTFC1QisCCiPyvdK-7cxKNN3j-X8TQJjfuESpAienfrkGZ9uwsd96hSbO9SBrC704KT3TKQr3UurYzVuq4ykdJyMziALURwlvdOJ5F1YZ8"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Admin User</p>
+<p class="text-xs text-on-surface-variant truncate">Distributor Level</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md ml-64 max-w-[calc(100%-16rem)]">
+<div class="flex justify-between items-center px-8 py-4">
+<nav class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="hover:text-primary cursor-pointer transition-colors">Dashboard</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Store Settings</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-semibold">Appearance</span>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hover:bg-emerald-50/50 rounded-full p-2 transition-transform active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="hover:bg-emerald-50/50 rounded-full p-2 transition-transform active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">shopping_cart</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-white rounded-md font-semibold text-sm shadow-lg shadow-primary/20 transition-transform active:scale-95">
+                    Save Changes
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 p-8">
+<div class="max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12">
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight mb-2">Storefront Customization</h2>
+<p class="text-on-surface-variant text-lg max-w-2xl">Define your brand identity and preview how your distributors will experience your digital storefront.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Settings -->
+<div class="col-span-12 lg:col-span-5 space-y-8">
+<!-- Branding Card -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-transparent">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary">palette</span>
+<h3 class="text-xl font-bold tracking-tight">Brand Identity</h3>
+</div>
+<!-- Color Pickers -->
+<div class="space-y-6">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Primary Branding Color</label>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary border-4 border-surface shadow-md"></div>
+<input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-mono" type="text" value="#286652"/>
+<button class="p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">colorize</span>
+</button>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Secondary Accent Color</label>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary border-4 border-surface shadow-md"></div>
+<input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-mono" type="text" value="#515F74"/>
+<button class="p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">colorize</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Logo Upload -->
+<div class="mt-10">
+<label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Brand Logo</label>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-8 text-center bg-surface-container-low/30 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-4xl text-outline-variant group-hover:text-primary transition-colors mb-2">upload_file</span>
+<p class="text-sm font-medium text-on-surface">Drag and drop your logo here</p>
+<p class="text-xs text-on-surface-variant mt-1">PNG, SVG or WEBP (Max 2MB)</p>
+</div>
+</div>
+</section>
+<!-- Banner Customization -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary">image</span>
+<h3 class="text-xl font-bold tracking-tight">Banner Image</h3>
+</div>
+<div class="relative group overflow-hidden rounded-xl aspect-[21/9] mb-4">
+<img alt="Banner Preview" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Wide landscape of green organic farm fields" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWg94njWrjlhJZPpOAXxT5ZSZikI7Ak9rjyfbBA39lK6QYo6_ZSlkWvI9FZOIZtgKsRcrQhshRwa_zUpQfhW2sAxCNjk0KQBigZR2bDRb7fc4QhaWlzQbXTDYcalDXN2gPX-njLdpsi3n1EiJ5gN0oKDQ3yy-kbIUPoxpuSZHhh7PhQdIF2QVtZB7zpfUMorO_9bSnLme9T1LjGcZOFMzBI58sKksXUdVq4PhHl4lB0NPuLn3O4-i0Wx1ogm4-9pLzgVgMnAB35XI"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+<button class="bg-white/20 backdrop-blur-md text-white px-6 py-2 rounded-full font-bold text-sm border border-white/30 hover:bg-white/40 transition-all">Replace Image</button>
+</div>
+</div>
+<div class="flex gap-2">
+<div class="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+<div class="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+<div class="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+<button class="h-12 px-4 rounded-lg bg-surface-container-low text-xs font-bold text-outline hover:bg-surface-container transition-colors">Browse Stock</button>
+</div>
+</section>
+</div>
+<!-- Right Column: Live Preview -->
+<div class="col-span-12 lg:col-span-7">
+<div class="sticky top-28">
+<div class="flex items-center justify-between mb-4 px-2">
+<h3 class="text-xs font-bold uppercase tracking-widest text-outline">Live Store Preview</h3>
+<div class="flex gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error/40"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary/40"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-primary/40"></span>
+</div>
+</div>
+<!-- Embedded Mini-Mockup (Glassmorphism + Editorial) -->
+<div class="bg-surface-container-highest rounded-2xl p-1 shadow-2xl overflow-hidden border border-white/20">
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden min-h-[600px] flex flex-col">
+<!-- Mockup Nav -->
+<div class="px-6 py-4 flex justify-between items-center border-b border-surface-container">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-primary rounded-sm"></div>
+<span class="font-headline font-bold text-xs tracking-tight">VERDANT DISTRO</span>
+</div>
+<div class="flex gap-4 text-[10px] font-bold text-outline uppercase tracking-tighter">
+<span>Products</span>
+<span>Orders</span>
+<span>Support</span>
+</div>
+</div>
+<!-- Mockup Hero -->
+<div class="relative h-48">
+<img alt="Banner Preview Small" class="w-full h-full object-cover" data-alt="Wide landscape of green organic farm fields" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzhZe7DzageO5npT5nVTOfp9fcuuy63jbbRP22oA8v4oBVr_b6KM1InOB6afuQN4pap6L-Ds4QdAFE4yTZ6dt1Ckfa095FSSTAKaktaiwmMKUQ6h6bH7VZyG3XkBItqQj5ZeowIyPULT738bP3AFr4MEbBKJnb87s6lWIb3EAM7a1jhKXIjSC1DbURubqB7tGVEmWX7ZXSe_TiKco4J-iT5hDY6bUHWizkMCyc-F6aSN3AuFCDvA_bHbBuUGHqYQ0GIjimWHy0wK4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent flex items-end p-6">
+<div class="text-white">
+<h4 class="text-2xl font-extrabold leading-tight">Nature's Precision,<br/>Delivered.</h4>
+<button class="mt-3 px-4 py-1.5 bg-white text-primary rounded-sm font-bold text-[10px] uppercase">Shop Catalog</button>
+</div>
+</div>
+</div>
+<!-- Mockup Content -->
+<div class="p-6 flex-1 space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<div class="aspect-square bg-surface-container-low rounded-lg overflow-hidden group">
+<img alt="Product 1" class="w-full h-full object-cover" data-alt="Small potted vegetable seedling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvWiqcH4Mh_2oeZrTQ3EUAQhPisaJZsuDjPYp77Y03c8gG5cgAPMPqHfV4tuL_6vgjI98_apOnqG4jq3-Xk_iR6LmGoX_kPekA1JTvwcTX2wcW6vF40APkaxQYfkc1z5tTJZyPymG0t_kNcyuMY8xq7ns5wR7r5ZxBPM5FodT6zUJXB_woRc_Kf-RfEEhCbjgXssTT5PI9TZv5_cvZkGKi7AqCfBa-ELrrLDLIeG2gbSd_DIIi92yxc3fddmCtKwrgBl27ppOs_ZE"/>
+</div>
+<div class="h-2 w-3/4 bg-surface-container rounded-full"></div>
+<div class="h-2 w-1/2 bg-surface-container-low rounded-full"></div>
+</div>
+<div class="space-y-2">
+<div class="aspect-square bg-surface-container-low rounded-lg overflow-hidden">
+<img alt="Product 2" class="w-full h-full object-cover" data-alt="Macro photo of dark soil and seeds" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj5MF_E27NRDsCiyDdtQWoBfIdUs2HIoG0c-9znDkjb--EsMR-Rx91a53IaMq_y3kezRBdIz0ts7pC72ehYhv8VW8Ue2o_A6Spq-uyYcWGw48kvZcz-jub9Eh_wqQOMep_bcb2pAX7qPCN9JdiYNDj82sCOsfokeX2DFId9JJOy_IojvxygYyDOkYUQgsAt1czk0pggm5CcM14j3MjpQFQjWorBRbM5K_OG0FhqVMDi_J6-EZs8jVGWVytN3ZBc_o-61zHp1B98eQ"/>
+</div>
+<div class="h-2 w-3/4 bg-surface-container rounded-full"></div>
+<div class="h-2 w-1/2 bg-surface-container-low rounded-full"></div>
+</div>
+</div>
+<div class="p-4 bg-primary/5 border border-primary/10 rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+</div>
+<div class="flex-1">
+<div class="h-2 w-1/2 bg-primary/20 rounded-full mb-1"></div>
+<div class="h-2 w-full bg-primary/10 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Preview Badge -->
+<div class="bg-surface-container text-center py-2">
+<p class="text-[9px] font-bold text-outline uppercase tracking-widest">Interactive Preview Mode</p>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-8 flex items-center justify-end gap-4">
+<button class="px-6 py-3 text-sm font-bold text-outline hover:text-on-surface transition-colors">Discard Draft</button>
+<button class="px-8 py-3 bg-on-surface text-white rounded-md font-bold text-sm shadow-xl hover:opacity-90 transition-all active:scale-95">Publish Storefront</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB for quick actions (Suppressed on settings according to rules, but keeping a toggle if contextual) -->
+<!-- Suppressed per rule: "You MUST suppress the FAB on Settings, Profile, Details, and Transactional screens." -->
+</body></html>

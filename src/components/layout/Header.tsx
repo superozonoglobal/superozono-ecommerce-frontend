@@ -1,89 +1,100 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCart } from '@/context/CartContext';
-import { api } from '@/lib/api';
-import { User } from '@/types';
 
-const STORAGE_KEY = 'superozono_store_config';
+import { useState } from "react";
+import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
-  const { cartCount } = useCart();
-  const [logo, setLogo] = useState<string | null>(null);
-  const [showLogo, setShowLogo] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const pathname = usePathname();
-  const router = useRouter();
-  const isAdminPath = pathname?.startsWith('/admin') || pathname?.startsWith('/distribuidor');
-
-  useEffect(() => {
-    // 1. Cargar Usuario
-    setCurrentUser(api.users.getCurrentUser());
-
-    // 2. Cargar Branding (Si no es admin)
-    if (isAdminPath) {
-      document.documentElement.style.setProperty('--primary-color', '#3b82f6');
-      document.documentElement.style.setProperty('--accent-color', '#8b5cf6');
-      document.documentElement.style.setProperty('--body-bg', '#0f172a');
-      document.documentElement.style.setProperty('--body-bg-gradient', 
-        'radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%), radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%)'
-      );
-    } else {
-      const config = api.store.getConfig();
-      if (config) {
-        if (config.primaryColor) document.documentElement.style.setProperty('--primary-color', config.primaryColor);
-        if (config.accentColor) document.documentElement.style.setProperty('--accent-color', config.accentColor);
-        if (config.backgroundColor) document.documentElement.style.setProperty('--body-bg', config.backgroundColor);
-        
-        if (config.primaryColor && config.accentColor) {
-           const gradient = `radial-gradient(circle at 15% 50%, ${config.primaryColor}15, transparent 25%), radial-gradient(circle at 85% 30%, ${config.accentColor}15, transparent 25%)`;
-           document.documentElement.style.setProperty('--body-bg-gradient', gradient);
-        }
-        setLogo(config.logoBase64 || null);
-        setShowLogo(config.showLogo !== undefined ? config.showLogo : true);
-      }
-    }
-  }, [isAdminPath, pathname]);
-
-  const handleLogout = () => {
-    api.users.logout();
-    setCurrentUser(null);
-    router.push('/login');
-  };
+  const { items } = useCart();
+  const [isOpen, setIsOpen] = useState(false);
+  const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <header className="site-header">
-      <div className="header-container">
-        <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {logo && showLogo && !isAdminPath ? (
-            <img src={logo} alt="Logo" style={{ height: '32px', width: 'auto', borderRadius: '4px' }} />
-          ) : (showLogo && '🚀')}
-          <span>SuperOzono</span>
-        </Link>
-        <nav className="main-nav">
-          <Link href="/productos" className="nav-link">Productos</Link>
-          
-          {currentUser ? (
-            <>
-              {currentUser.role === 'super_admin' || currentUser.role === 'admin' ? (
-                <Link href="/admin" className="nav-link">Admin</Link>
-              ) : (
-                <Link href="/distribuidor" className="nav-link">Dashboard</Link>
-              )}
-              <Link href="/carrito" className="nav-link">
-                Carrito {cartCount > 0 && <span style={{ background: 'var(--primary-color)', color: '#fff', borderRadius: '50%', padding: '2px 8px', marginLeft: '5px', fontSize: '0.8rem' }}>{cartCount}</span>}
-              </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem' }}>
-                <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>Hola, {currentUser.name}</span>
-                <button onClick={handleLogout} className="nav-link logout-btn-text" style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}>Salir</button>
-              </div>
-            </>
-          ) : (
-            <Link href="/login" className="nav-link login-btn">Iniciar Sesión</Link>
-          )}
+    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-surface-container">
+      <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+        {/* Brand Logo */}
+        <div className="flex items-center gap-2">
+          <Link href="/">
+            <span className="text-xl font-black tracking-tight text-primary font-headline uppercase">SuperOzono</span>
+          </Link>
+        </div>
+
+        {/* Search Bar */}
+        <div className="hidden md:flex flex-1 max-w-md mx-8">
+          <div className="relative w-full group">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+            <input 
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
+              placeholder="Buscar en nuestra colección..." 
+              type="text" 
+            />
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-10">
+          <Link href="/" className="text-primary font-bold font-headline text-sm tracking-wide">Comprar Todo</Link>
+          <a className="text-on-surface-variant hover:text-primary transition-colors font-headline text-sm font-medium" href="#">Soluciones</a>
+          <a className="text-on-surface-variant hover:text-primary transition-colors font-headline text-sm font-medium" href="#">Impacto</a>
         </nav>
+
+        {/* Trailing Icons */}
+        <div className="flex items-center gap-4">
+          <Link href="/carrito" className="hover:bg-emerald-50 rounded-full p-2 transition-all relative">
+            <span className="material-symbols-outlined text-emerald-800" style={{ fontVariationSettings: "'FILL' 0" }}>shopping_bag</span>
+            {itemCount > 0 && (
+              <span className="absolute top-1 right-1 bg-primary text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+          <div className="hidden sm:block w-8 h-8 rounded-full overflow-hidden border border-primary-fixed-dim">
+            <Link href="/login">
+              <img 
+                className="w-full h-full object-cover cursor-pointer" 
+                alt="User profile" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBkaQRFGnrACxRKPTswAMkhyoJsNRqUlY7UWGK-F8b5guChjFClxpupu58ORzVRLFuqFbF4zrsNuXOJWtnK8A7EXJwVzvSvirBtD-jexTdqAMmFydrxOYXASXbFBxQ1sx03XwNQIUN1czFTWHZUNOPrymxvy-3HFP7XYlR01DUO2-LQKy1qod8b8m1zbzXQVVAss3-YqkTa1IcC6-YTFznTCIju76Ss4PZq7feYPo51lvAXjE4LKWUYl4zciG4HscazLFG0uApmiI"
+              />
+            </Link>
+          </div>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden p-2 text-primary active:scale-95 transition-all z-50"
+          >
+            <span className="material-symbols-outlined text-2xl">
+              {isOpen ? 'close' : 'menu'}
+            </span>
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="lg:hidden fixed inset-0 top-0 bg-white z-40 p-6 flex flex-col gap-8 pt-24"
+          >
+            <div className="flex flex-col gap-6">
+              <Link href="/" onClick={() => setIsOpen(false)} className="text-2xl font-black text-primary font-headline tracking-tighter">TIENDA</Link>
+              <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">SOLUCIONES</a>
+              <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">IMPACTO</a>
+            </div>
+            <div className="mt-auto pt-8 border-t border-surface-container flex flex-col gap-4">
+               <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-5 bg-surface-container-low rounded-3xl font-black text-xs uppercase tracking-widest text-primary">
+                  <span className="material-symbols-outlined">person</span> 
+                  MI CUENTA MAESTRA
+               </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

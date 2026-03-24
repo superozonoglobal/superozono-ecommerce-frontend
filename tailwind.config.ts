@@ -1,0 +1,75 @@
+import type { Config } from "tailwindcss";
+
+export default {
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "error-container": "#ffdad6",
+        "secondary-container": "#d5e3fc",
+        "surface-container-highest": "#e0e3e5",
+        "secondary-fixed": "#d5e3fc",
+        "on-tertiary-fixed": "#410004",
+        "on-primary-fixed-variant": "#0b513d",
+        "on-surface-variant": "#3d4a42",
+        "primary": "#286652",
+        "secondary-fixed-dim": "#b9c7df",
+        "tertiary-fixed-dim": "#ffb3ae",
+        "surface-container-high": "#e6e8ea",
+        "tertiary-fixed": "#ffdad7",
+        "outline": "#6d7a72",
+        "surface-variant": "#e0e3e5",
+        "surface": "#f7f9fb",
+        "surface-tint": "#2b6954",
+        "on-secondary-fixed-variant": "#3a485b",
+        "on-error-container": "#93000a",
+        "on-tertiary": "#ffffff",
+        "surface-bright": "#f7f9fb",
+        "on-secondary-fixed": "#0d1c2e",
+        "on-tertiary-fixed-variant": "#7f2928",
+        "inverse-surface": "#2d3133",
+        "surface-container-low": "#f2f4f6",
+        "surface-container-lowest": "#ffffff",
+        "on-primary-container": "#f5fff8",
+        "on-background": "#191c1e",
+        "background": "#f7f9fb",
+        "error": "#ba1a1a",
+        "on-primary-fixed": "#002117",
+        "surface-container": "#eceef0",
+        "primary-fixed-dim": "#95d3ba",
+        "on-secondary-container": "#57657a",
+        "tertiary-container": "#ba5551",
+        "on-surface": "#191c1e",
+        "on-error": "#ffffff",
+        "outline-variant": "#bccac0",
+        "tertiary": "#9b3e3b",
+        "primary-container": "#43806a",
+        "surface-dim": "#d8dadc",
+        "secondary": "#515f74",
+        "inverse-primary": "#95d3ba",
+        "on-secondary": "#ffffff",
+        "on-primary": "#ffffff",
+        "on-tertiary-container": "#fffbff",
+        "inverse-on-surface": "#eff1f3",
+        "primary-fixed": "#b0f0d6"
+      },
+      fontFamily: {
+        "headline": ["var(--font-manrope)", "sans-serif"],
+        "body": ["var(--font-inter)", "sans-serif"],
+        "label": ["var(--font-inter)", "sans-serif"]
+      },
+      borderRadius: {
+        "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/container-queries'),
+  ],
+} satisfies Config;

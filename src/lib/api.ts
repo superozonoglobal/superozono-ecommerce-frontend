@@ -1,71 +1,47 @@
-/**
- * API SERVICE LAYER
- * Centralized place for all data operations.
- * Currently uses localStorage but designed for easy backend swap.
- */
+import axios from 'axios';
 
-import { User, Invitation, StoreConfig, Product } from '@/types';
+export const API_BASE_URL = 'https://superozono-saas-api-349422942239.us-central1.run.app/api/v1';
 
-const USERS_KEY = 'superozono_users';
-const INVITES_KEY = 'superozono_invites';
-const CONFIG_KEY = 'superozono_store_config';
-
-// --- UTILS ---
-const getItem = <T>(key: string): T[] => {
-  if (typeof window === 'undefined') return [];
-  const item = localStorage.getItem(key);
-  return item ? JSON.parse(item) : [];
-};
-
-const setItem = <T>(key: string, value: T) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(value));
-};
-
-// --- AUTH & USERS ---
-export const api = {
-  users: {
-    getAll: (): User[] => getItem<User>(USERS_KEY),
-    getById: (id: string) => getItem<User>(USERS_KEY).find(u => u.id === id),
-    getByEmail: (email: string) => getItem<User>(USERS_KEY).find(u => u.email === email),
-    create: (user: User) => {
-      const users = getItem<User>(USERS_KEY);
-      users.push(user);
-      setItem(USERS_KEY, users);
-      return user;
-    },
-    getCurrentUser: (): User | null => {
-      const saved = localStorage.getItem('superozono_current_user');
-      return saved ? JSON.parse(saved) : null;
-    },
-    logout: () => {
-      localStorage.removeItem('superozono_current_user');
-    }
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
+});
 
-  invites: {
-    getAll: (): Invitation[] => getItem<Invitation>(INVITES_KEY),
-    create: (invite: Invitation) => {
-      const invites = getItem<Invitation>(INVITES_KEY);
-      invites.push(invite);
-      setItem(INVITES_KEY, invites);
-      return invite;
-    },
-    getById: (id: string) => getItem<Invitation>(INVITES_KEY).find(i => i.id === id),
-    remove: (id: string) => {
-      const invites = getItem<Invitation>(INVITES_KEY).filter(i => i.id !== id);
-      setItem(INVITES_KEY, invites);
+// Request Interceptor to attach the Bearer token automatically
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('superozono_access_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+    console.log(`📡 [API SENDING] ${config.method?.toUpperCase()} ${config.url}`, config.data || '(No Payload)');
+    return config;
   },
-
-  store: {
-    getConfig: (): StoreConfig | null => {
-      if (typeof window === 'undefined') return null;
-      const saved = localStorage.getItem(CONFIG_KEY);
-      return saved ? JSON.parse(saved) : null;
-    },
-    saveConfig: (config: StoreConfig) => {
-      setItem(CONFIG_KEY, config);
-    }
+  (error) => {
+    console.error(`🚨 [API SEND ERROR]`, error);
+    return Promise.reject(error);
   }
-};
+);
+
+// Response Interceptor to globally handle 401s (Token Expired) or format errors
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log(`✅ [API RESPONSE] ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`❌ [API FAILED] ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data || error.message);
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('superozono_access_token');
+        localStorage.removeItem('superozono_user');
+        window.location.href = '/login'; 
+      }
+    }
+    return Promise.reject(error);
+  }
+);

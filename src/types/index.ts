@@ -1,39 +1,66 @@
-export type UserRole = 'super_admin' | 'admin' | 'distribuidor';
+export type UserRole = 'ROOT_ADMIN' | 'ADMIN' | 'DISTRIBUTOR';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp?: string;
+}
 
 export interface User {
   id: string;
+  firstName: string;
+  lastName?: string;
   email: string;
-  password?: string;
   role: UserRole;
-  subdomain?: string;
-  name?: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface Invitation {
-  id: string; // Token
-  email: string;
-  role: UserRole;
-  subdomain?: string;
+export interface Store {
+  id: string;
+  name: string;
+  subdomain: string;
+  address: string;
+  phone: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+  primaryColor?: string;
+  secondaryColor?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  ownerId?: string;
   createdAt: string;
-  status: 'pending' | 'accepted' | 'expired';
 }
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
-  price: number;
-  desc?: string;
-  icon?: string;
-  active: boolean;
-  stock?: number;
+  description: string;
+  sku: string;
+  category: string;
+  basePrice: number;
+  quantity: number;
+  minStockAlert: number;
+  status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
+  storeId: string;
+  imageUrl?: string;
 }
 
-export interface StoreConfig {
-  primaryColor: string;
-  accentColor: string;
-  backgroundColor: string;
-  logoBase64?: string;
-  showLogo: boolean;
-  storeName: string;
-  products: Product[];
+export interface OrderItem {
+  productId: string;
+  quantity: number;
+  productName?: string;
+  price?: number;
+}
+
+export interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  items: OrderItem[];
+  totalPrice: number;
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  storeId: string;
+  createdAt: string;
 }

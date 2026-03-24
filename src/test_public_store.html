@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "secondary-container": "#d5e3fc",
+              "surface-container-highest": "#e0e3e5",
+              "secondary-fixed": "#d5e3fc",
+              "on-tertiary-fixed": "#410004",
+              "on-primary-fixed-variant": "#0b513d",
+              "on-surface-variant": "#3d4a42",
+              "primary": "#286652",
+              "secondary-fixed-dim": "#b9c7df",
+              "tertiary-fixed-dim": "#ffb3ae",
+              "surface-container-high": "#e6e8ea",
+              "tertiary-fixed": "#ffdad7",
+              "outline": "#6d7a72",
+              "surface-variant": "#e0e3e5",
+              "surface": "#f7f9fb",
+              "surface-tint": "#2b6954",
+              "on-secondary-fixed-variant": "#3a485b",
+              "on-error-container": "#93000a",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f7f9fb",
+              "on-secondary-fixed": "#0d1c2e",
+              "on-tertiary-fixed-variant": "#7f2928",
+              "inverse-surface": "#2d3133",
+              "surface-container-low": "#f2f4f6",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-container": "#f5fff8",
+              "on-background": "#191c1e",
+              "background": "#f7f9fb",
+              "error": "#ba1a1a",
+              "on-primary-fixed": "#002117",
+              "surface-container": "#eceef0",
+              "primary-fixed-dim": "#95d3ba",
+              "on-secondary-container": "#57657a",
+              "tertiary-container": "#ba5551",
+              "on-surface": "#191c1e",
+              "on-error": "#ffffff",
+              "outline-variant": "#bccac0",
+              "tertiary": "#9b3e3b",
+              "primary-container": "#43806a",
+              "surface-dim": "#d8dadc",
+              "secondary": "#515f74",
+              "inverse-primary": "#95d3ba",
+              "on-secondary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-tertiary-container": "#fffbff",
+              "inverse-on-surface": "#eff1f3",
+              "primary-fixed": "#b0f0d6"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #286652 0%, #43806a 100%);
+        }
+        .quick-add-btn {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .group:hover .quick-add-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-surface-container">
+<div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+<!-- Brand Logo -->
+<div class="flex items-center gap-2">
+<span class="text-xl font-black tracking-tight text-emerald-900 font-headline uppercase">Verdant</span>
+</div>
+<!-- Search Bar -->
+<div class="hidden md:flex flex-1 max-w-md mx-8">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant/30 rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Search our collection..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden lg:flex items-center gap-10">
+<a class="text-primary font-bold font-headline text-sm tracking-wide" href="#">Shop All</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-headline text-sm font-medium" href="#">Solutions</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-headline text-sm font-medium" href="#">Impact</a>
+</nav>
+<!-- Trailing Icons -->
+<div class="flex items-center gap-4 ml-8">
+<button class="hover:bg-emerald-50 rounded-full p-2 transition-all relative">
+<span class="material-symbols-outlined text-emerald-800" data-icon="shopping_bag">shopping_bag</span>
+<span class="absolute top-1 right-1 bg-primary text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">2</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary-fixed-dim">
+<img class="w-full h-full object-cover" data-alt="User profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBkaQRFGnrACxRKPTswAMkhyoJsNRqUlY7UWGK-F8b5guChjFClxpupu58ORzVRLFuqFbF4zrsNuXOJWtnK8A7EXJwVzvSvirBtD-jexTdqAMmFydrxOYXASXbFBxQ1sx03XwNQIUN1czFTWHZUNOPrymxvy-3HFP7XYlR01DUO2-LQKy1qod8b8m1zbzXQVVAss3-YqkTa1IcC6-YTFznTCIju76Ss4PZq7feYPo51lvAXjE4LKWUYl4zciG4HscazLFG0uApmiI"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 pb-24">
+<!-- Hero Section: Editorial Layout -->
+<section class="mt-8 mb-20 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-[2rem] bg-on-primary-fixed border border-outline-variant/10">
+<!-- Content Layer -->
+<div class="lg:col-span-5 p-12 md:p-20 flex flex-col justify-center bg-primary text-white">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-white rounded-full text-[10px] font-bold mb-8 tracking-[0.2em] uppercase">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+                    Season Selection
+                </div>
+<h1 class="font-headline text-5xl md:text-6xl font-extrabold leading-[1.05] mb-8 tracking-tighter">
+                    Ozone Water <br/><span class="text-primary-fixed">Mastery.</span>
+</h1>
+<p class="text-white/80 text-lg mb-10 leading-relaxed font-body max-w-md">
+                    Molecular precision for the modern cultivator. Eradicate pathogens with zero residue through our patented infusion systems.
+                </p>
+<div class="flex flex-col sm:flex-row items-stretch gap-4">
+<button class="bg-white text-primary px-10 py-4 rounded-full font-bold text-sm tracking-wide shadow-2xl shadow-black/20 hover:bg-primary-fixed transition-all flex items-center justify-center gap-2">
+                        Shop Collection <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-full font-bold text-sm hover:bg-white/20 transition-all flex items-center justify-center">
+                        The Science
+                    </button>
+</div>
+</div>
+<!-- Visual Layer -->
+<div class="lg:col-span-7 relative min-h-[400px]">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="High tech vertical farm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC5E9Cq5INsfVSTJuV5uaKBLLdNKqDt78C8aVhcYc2uZd3lvF4Q8vsDpTrkY7w76fhEeLKT_KbYQAKT5mNs3DRMlZKP3R0Y1aFoddsMgqnO3zLbF2eggDj0Yyey1CoqJ32vF3VAH9R_8wpyptbJ3wYFI7fRqc0RBZSjN9REY5HuM9KIdSCocOHzQMkWNMoNI_LAjFxwnfqMZl7_qlrdFm6spTolidmemfMw3KFEJNUOU_wr4bSBp564gG1ibLxGwhdQHqtFPbnmBA"/>
+<div class="absolute bottom-8 right-8 bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-2xl max-w-xs hidden md:block">
+<div class="flex gap-1 text-primary-fixed mb-2">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-white text-sm italic">"Transformed our hydroponic yield by 40% in just one season. The purity is unmatched."</p>
+<p class="text-white/60 text-[10px] mt-4 font-bold uppercase tracking-wider">Loomis Farms, California</p>
+</div>
+</div>
+</section>
+<!-- Product Grid Header -->
+<div class="flex flex-col md:flex-row justify-between items-baseline mb-12 gap-6">
+<div>
+<h2 class="font-headline text-4xl font-extrabold text-on-surface tracking-tight mb-3">Precision Agrochemicals</h2>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">verified</span> Certified Organic</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings: 'FILL' 1;">eco</span> Sustainable Sourcing</span>
+</div>
+</div>
+<div class="flex gap-2 p-1 bg-surface-container-low rounded-full border border-outline-variant/20">
+<button class="px-6 py-2 bg-primary text-on-primary rounded-full text-xs font-bold shadow-md transition-all">Featured</button>
+<button class="px-6 py-2 text-on-surface-variant hover:text-primary rounded-full text-xs font-bold transition-all">New Arrivals</button>
+<button class="px-6 py-2 text-on-surface-variant hover:text-primary rounded-full text-xs font-bold transition-all">Best Sellers</button>
+</div>
+</div>
+<!-- Optimized Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+<!-- Card 1 -->
+<div class="group flex flex-col bg-white rounded-3xl p-3 border border-transparent hover:border-outline-variant/20 hover:shadow-2xl transition-all duration-500">
+<div class="relative aspect-[4/5] bg-surface-container rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Clean glass bottle of ozone water treatment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK3c9CROrKB11EuFbETtnBcxIvvBjEb5Ctc8zSdDGK-tj8NYRkZ84Cb0TPC88WELTums0RGER7z6uDOjNNN14KxbRpve7LaOJJAMcSRFRUryXNGH0g3j4skMUWMiIQI5qDUNkDClcAQtmXhEN4jcH_fADBBDcx4B69qOB1g0jNztnTtLocZ3ukHiIlnNNutTpXtiWkWt12amKY41eg0Q7YPeaD6Ci_KaMLlXISj5qBTo9fVXKAY0myXyjZKgcQ8pAiXb02ISICL8g"/>
+<div class="absolute top-4 left-4 flex flex-col gap-2">
+<span class="bg-primary text-on-primary px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Best Seller</span>
+</div>
+<!-- Quick Add Feature -->
+<div class="absolute inset-x-4 bottom-4 quick-add-btn">
+<button class="w-full bg-white/95 backdrop-blur py-3.5 rounded-xl text-primary font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span> Quick Add
+                        </button>
+</div>
+</div>
+<div class="px-3 pb-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-bold text-lg text-on-surface leading-tight">Ozone Water Treatment</h3>
+<span class="font-headline font-extrabold text-xl text-primary">$450.00</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-4">Industrial pathogen eradication system.</p>
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span> 4.9 (120 reviews)</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group flex flex-col bg-white rounded-3xl p-3 border border-transparent hover:border-outline-variant/20 hover:shadow-2xl transition-all duration-500">
+<div class="relative aspect-[4/5] bg-surface-container rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Organic soil enricher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkf4OIEZRi2rs_t1nW42shqsR-KmnWtN5k9qoglBgnnslFJPYV6FwnPoBjgYd_B7nTO7RBZVhi2m4Y9WXXdoSvXSXvTUOvQwYQEVTJzK0seGtBkbsMGbJd7zmt9MsaGkUnbftwaR50-koDprPERB34z83_12BrKBMXjwFplGxk1ENUCz0BHgS4aUqdViHb5k4CywcC0TZrJ_oyxOh8ibtbkgRAsrzC5nsHnXHQpp6jccVZFQMVGfH6UHIZSgnEQ5ZbUKgQZnRBduc"/>
+<div class="absolute top-4 left-4">
+<span class="bg-tertiary text-on-tertiary px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">New Formula</span>
+</div>
+<div class="absolute inset-x-4 bottom-4 quick-add-btn">
+<button class="w-full bg-white/95 backdrop-blur py-3.5 rounded-xl text-primary font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span> Quick Add
+                        </button>
+</div>
+</div>
+<div class="px-3 pb-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-bold text-lg text-on-surface leading-tight">Soil Enricher 2.0</h3>
+<span class="font-headline font-extrabold text-xl text-primary">$125.00</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-4">Ozonated organic mineral concentrate.</p>
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span> 4.8 (85 reviews)</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group flex flex-col bg-white rounded-3xl p-3 border border-transparent hover:border-outline-variant/20 hover:shadow-2xl transition-all duration-500">
+<div class="relative aspect-[4/5] bg-surface-container rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Digital sensor probe" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5-poPdzP2NJs6z65raecU71_c6TJVIv42f4DrboQ-hCwsHQrc-fHEOHJbvepUukX7IV773MjZwv3bVisS7LI_bORpjDVItyJ51eXYm43Gd3hjgSuMst0rs8nYLydf65M6-_m7KDroXYR7YrV9EzgN1mI9l4MWd3hgoumtW82hvLJKLe_Vwjnco0lUXPsgoJGjYVQKzKDEcI509hqZ_CKjsUKBTddE-4sORcHR0zW6-5Jc19o-U-XgZqdsAPfyXZoVQ67QRThxNm0"/>
+<div class="absolute inset-x-4 bottom-4 quick-add-btn">
+<button class="w-full bg-white/95 backdrop-blur py-3.5 rounded-xl text-primary font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span> Quick Add
+                        </button>
+</div>
+</div>
+<div class="px-3 pb-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-bold text-lg text-on-surface leading-tight">Ozone Probe Max</h3>
+<span class="font-headline font-extrabold text-xl text-primary">$89.00</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-4">Precision real-time saturation sensor.</p>
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span> 5.0 (42 reviews)</span>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group flex flex-col bg-white rounded-3xl p-3 border border-transparent hover:border-outline-variant/20 hover:shadow-2xl transition-all duration-500">
+<div class="relative aspect-[4/5] bg-surface-container rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Nutrient density booster" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwLqIsAwKw9XIt2OnQWPBDSqyDmGX-JupcM7WqcYH7pDL_LMU1QKLu5xnAFmADLJS0vX5Nhxw_xNRRMJCq6Dcnu8bRRLbSUrGdWlAWSjtrQi2t991TooJUpsiae-0REHZ1SmUib49zK1lctXSX7Jit-xlpPUOaka-ghX-bkvXuAKURSyFNqinqCgMWuj73NBd52BoQiekVoZkS9-ZYE-a59HJbjqC4HV07eXT_x7tbhRc9JhgpW6wRhr14cYG1VcpT32V2t0QCR0Q"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Yield Boost</span>
+</div>
+<div class="absolute inset-x-4 bottom-4 quick-add-btn">
+<button class="w-full bg-white/95 backdrop-blur py-3.5 rounded-xl text-primary font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span> Quick Add
+                        </button>
+</div>
+</div>
+<div class="px-3 pb-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline font-bold text-lg text-on-surface leading-tight">Foliar Booster</h3>
+<span class="font-headline font-extrabold text-xl text-primary">$64.50</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-4">Enhanced cellular absorption spray.</p>
+<div class="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span> 4.7 (92 reviews)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Trust & Social Proof Section -->
+<section class="mt-32 grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+<div class="md:col-span-8 bg-primary rounded-[2.5rem] p-12 text-white flex flex-col justify-between overflow-hidden relative shadow-2xl">
+<div class="relative z-10">
+<h3 class="font-headline text-4xl font-extrabold mb-6 tracking-tight">The Future of Agriculture <br/>is Chemical-Free.</h3>
+<p class="text-white/70 max-w-lg mb-10 leading-relaxed text-lg">Join 12,000+ farmers worldwide who have swapped harmful pesticides for our high-performance ozone technology. Better for the soil, better for the soul.</p>
+<div class="flex flex-wrap gap-8 items-center">
+<div class="flex flex-col">
+<span class="text-3xl font-black font-headline tracking-tighter">99.9%</span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary-fixed-dim">Pathogen Kill Rate</span>
+</div>
+<div class="w-px h-10 bg-white/10 hidden sm:block"></div>
+<div class="flex flex-col">
+<span class="text-3xl font-black font-headline tracking-tighter">12k+</span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary-fixed-dim">Active Installations</span>
+</div>
+<div class="w-px h-10 bg-white/10 hidden sm:block"></div>
+<div class="flex flex-col">
+<span class="text-3xl font-black font-headline tracking-tighter">50+</span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary-fixed-dim">Countries Reached</span>
+</div>
+</div>
+</div>
+<div class="absolute -right-20 -bottom-20 w-[400px] h-[400px] bg-primary-fixed/10 rounded-full blur-3xl"></div>
+</div>
+<div class="md:col-span-4 flex flex-col gap-6">
+<div class="flex-1 bg-surface-container-low rounded-[2.5rem] p-8 border border-outline-variant/10 hover:bg-white transition-all">
+<div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-6">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">public</span>
+</div>
+<h4 class="font-headline font-bold text-xl mb-2">Global Shipping</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed">Door-to-door express logistics for all industrial equipment.</p>
+</div>
+<div class="flex-1 bg-surface-container-low rounded-[2.5rem] p-8 border border-outline-variant/10 hover:bg-white transition-all">
+<div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-6">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<h4 class="font-headline font-bold text-xl mb-2">Lab Certified</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed">Rigorous multi-stage purity testing for every batch produced.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-white border-t border-surface-container py-24">
+<div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16">
+<div class="col-span-1 md:col-span-2">
+<span class="text-2xl font-black text-emerald-900 font-headline mb-8 block uppercase tracking-tight">Verdant Modernist</span>
+<p class="text-on-surface-variant text-base max-w-md leading-relaxed">
+                    Pioneering the intersection of ozone technology and organic growth. Leading the global shift towards sustainable, precision-driven agriculture.
+                </p>
+<div class="flex gap-6 mt-10">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">facebook</span></a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">group</span></a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined">movie</span></a>
+</div>
+</div>
+<div>
+<h5 class="font-headline font-bold text-xs uppercase tracking-[0.2em] text-on-surface/50 mb-8">Collection</h5>
+<ul class="space-y-4 text-sm font-medium text-on-surface-variant">
+<li><a class="hover:text-primary transition-colors" href="#">Water Treatment</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Soil Nutrition</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Sensors &amp; Probes</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Commercial Wholesale</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-headline font-bold text-xs uppercase tracking-[0.2em] text-on-surface/50 mb-8">Resources</h5>
+<ul class="space-y-4 text-sm font-medium text-on-surface-variant">
+<li><a class="hover:text-primary transition-colors" href="#">Case Studies</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Research Papers</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Sustainability Report</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Expert Support</a></li>
+</ul>
+</div>
+</div>
+<div class="max-w-7xl mx-auto px-6 mt-24 pt-8 border-t border-surface-container-low flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-outline">
+<p>© 2024 Verdant Modernist Solutions. All rights reserved.</p>
+<div class="flex gap-10">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Cookie Settings</a>
+</div>
+</div>
+</footer>
+</body></html>

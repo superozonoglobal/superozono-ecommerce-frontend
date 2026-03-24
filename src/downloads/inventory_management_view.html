@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verdant Modernist - Distributor Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "secondary-container": "#d5e3fc",
+              "surface-container-highest": "#e0e3e5",
+              "secondary-fixed": "#d5e3fc",
+              "on-tertiary-fixed": "#410004",
+              "on-primary-fixed-variant": "#0b513d",
+              "on-surface-variant": "#3d4a42",
+              "primary": "#286652",
+              "secondary-fixed-dim": "#b9c7df",
+              "tertiary-fixed-dim": "#ffb3ae",
+              "surface-container-high": "#e6e8ea",
+              "tertiary-fixed": "#ffdad7",
+              "outline": "#6d7a72",
+              "surface-variant": "#e0e3e5",
+              "surface": "#f7f9fb",
+              "surface-tint": "#2b6954",
+              "on-secondary-fixed-variant": "#3a485b",
+              "on-error-container": "#93000a",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f7f9fb",
+              "on-secondary-fixed": "#0d1c2e",
+              "on-tertiary-fixed-variant": "#7f2928",
+              "inverse-surface": "#2d3133",
+              "surface-container-low": "#f2f4f6",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-container": "#f5fff8",
+              "on-background": "#191c1e",
+              "background": "#f7f9fb",
+              "error": "#ba1a1a",
+              "on-primary-fixed": "#002117",
+              "surface-container": "#eceef0",
+              "primary-fixed-dim": "#95d3ba",
+              "on-secondary-container": "#57657a",
+              "tertiary-container": "#ba5551",
+              "on-surface": "#191c1e",
+              "on-error": "#ffffff",
+              "outline-variant": "#bccac0",
+              "tertiary": "#9b3e3b",
+              "primary-container": "#43806a",
+              "surface-dim": "#d8dadc",
+              "secondary": "#515f74",
+              "inverse-primary": "#95d3ba",
+              "on-secondary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-tertiary-container": "#fffbff",
+              "inverse-on-surface": "#eff1f3",
+              "primary-fixed": "#b0f0d6"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-background antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-transparent bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-xl shadow-slate-200/50 dark:shadow-none z-50 flex flex-col p-4">
+<div class="mb-10 px-4">
+<span class="text-xl font-bold text-emerald-900 dark:text-emerald-100 block">Verdant Admin</span>
+<span class="text-xs font-manrope font-medium text-slate-500 uppercase tracking-widest">Ozone Management</span>
+</div>
+<nav class="space-y-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 transition-transform" data-icon="dashboard">dashboard</span>
+<span class="font-manrope text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 transition-transform" data-icon="group">group</span>
+<span class="font-manrope text-sm font-medium">Users</span>
+</a>
+<!-- Active State Logic: Inventory is current page -->
+<a class="flex items-center gap-3 px-4 py-3 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-lg font-bold group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 transition-transform" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-manrope text-sm">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 transition-transform" data-icon="settings">settings</span>
+<span class="font-manrope text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-surface-container flex items-center gap-3 px-4">
+<div class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Professional male distributor profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPAJyWBF-kK9lK-pHkqyDlis5I7d68EjmhHnUDIcp1lerZn_BsOmmPStHNz8TieuHdQp9jXY54gUiYNHVStccFjc-Toi7aZAYwSpIPA2ioFSxfRneM4KybWkELBPtK8DisAvIXCBljtJZIUBb_cifKWgZhfDSAN_yJ42iqP68Hywi4RDT4pzLJL2bykKBMEsvEXvj5GZ8FwWAUgfmZRchX4P5I0TIJvhSHtTs2wJLR2MGTG6xs6IYL3B4bKOV5ZiVN3RC--DC4Wa8"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Alex Mercer</span>
+<span class="text-xs text-on-surface-variant">Global Logistics</span>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Component -->
+<header class="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex justify-between items-center px-6 py-3 border-b border-transparent ml-64 max-w-[calc(100%-16rem)]">
+<div class="flex items-center gap-4">
+<nav class="flex text-xs font-label text-on-surface-variant gap-2 items-center">
+<span>Dashboard</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-bold text-primary">Inventory Management</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined hover:bg-emerald-50/50 p-2 rounded-full transition-all cursor-pointer text-on-surface-variant" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined hover:bg-emerald-50/50 p-2 rounded-full transition-all cursor-pointer text-on-surface-variant" data-icon="shopping_cart">shopping_cart</span>
+<span class="material-symbols-outlined hover:bg-emerald-50/50 p-2 rounded-full transition-all cursor-pointer text-on-surface-variant" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-screen">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Header & Search -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-1">
+<h1 class="text-4xl font-extrabold tracking-tight text-on-surface">Inventory Matrix</h1>
+<p class="text-on-surface-variant max-w-md">Real-time oversight of distributor stock levels across regional Ozone nodes.</p>
+</div>
+<div class="relative w-full md:w-80 group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-xl focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest transition-all text-sm outline-none" placeholder="Search product catalogue..." type="text"/>
+</div>
+</section>
+<!-- Bento Statistics (Atmospheric Visuals) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-transparent shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs font-label uppercase tracking-widest text-on-surface-variant mb-1">Total Assets</p>
+<p class="text-3xl font-headline font-black text-on-surface">4,812</p>
+</div>
+<div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="category" style="font-variation-settings: 'FILL' 1;">category</span>
+</div>
+</div>
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-transparent shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs font-label uppercase tracking-widest text-on-surface-variant mb-1">Stock Value</p>
+<p class="text-3xl font-headline font-black text-on-surface">$1.2M</p>
+</div>
+<div class="h-12 w-12 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+</div>
+<div class="p-6 rounded-xl bg-error-container/20 border border-error/10 flex items-center justify-between">
+<div>
+<p class="text-xs font-label uppercase tracking-widest text-error mb-1">Alerts</p>
+<p class="text-3xl font-headline font-black text-error">02</p>
+</div>
+<div class="h-12 w-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+</div>
+</div>
+<!-- Inventory Table (High-End Editorial Style) -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Product details</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Available Stock</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Fixed Price (Unit)</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Product 1 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Product 1" class="w-full h-full object-cover" data-alt="High-tech hydroponic plant nutrient container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkQQSv487eBEVbBKP-h4rTisTHV-Pxcefm7aC4MQnw5ah8gJKzDFZzFHXPElGIoGcDSoOYj6pIjsjyCyBvCRrqoRCXs6Wq76Xs_G7DrRF92eelPlL1RXc8Om88V2rgy8RaJtPA0B4u6G1ijADjL-AhuMXzBYip2MJII8NqK-XjfXRKxFtbwt6Wkl0KYdcJElWByh16_lAaqylfT6kPUmf9aF51tnI-6KgE14x-4tTRj6OWw5hsnEp4R5H8TO-wc5yJ7bof7BSl6eA"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Ozone Bloom-Max v4</p>
+<p class="text-xs text-on-surface-variant">SKU: OZ-BM-001</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right font-headline font-semibold text-on-surface">1,240 Units</td>
+<td class="px-6 py-5 text-right font-body text-on-surface-variant">$284.50</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-tighter">Healthy</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" title="Edit Product">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Deactivate">
+<span class="material-symbols-outlined text-sm">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Product 2 (Restock Alert) -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Product 2" class="w-full h-full object-cover" data-alt="Automated irrigation sensor hardware device" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlQ9x_5rnlPQnHo1m3A-NmgqtJXDgAZdzFmUqw1TfAJzrI7AoHyXcCVzBL1QLEm-6qWQAs6PqKfkWadL_ZeYxNlpJnh68DUQSIPnb7zk3MI6uXG5oS8rPvaCkpXQTrGGc4LIMyPg1lNDAR1BlBFZfN3zxPKgBu68-0WQqEP4FLk5749YRGHDwZY0bKjTyb8uoQGdPHv-IDEzLRB4-yaTpb4TsiPjz8RAvi1s5KrCGNqWw2JeBRuL_R2IZCVgmQo1aTOaEYbdRRmXU"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">AquaPulse Sensor Pro</p>
+<p class="text-xs text-on-surface-variant">SKU: AP-SP-892</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="inline-flex flex-col items-end">
+<span class="font-headline font-semibold text-error">12 Units</span>
+<span class="bg-error-container text-on-error-container text-[8px] font-black uppercase px-2 py-0.5 rounded-full mt-1">Restock Alert</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right font-body text-on-surface-variant">$1,420.00</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold uppercase tracking-tighter">Critical</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" title="Edit Product">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Deactivate">
+<span class="material-symbols-outlined text-sm">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Product 3 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Product 3" class="w-full h-full object-cover" data-alt="Industrial bag of organic fertilizer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM_pGgEcU2oF38vZap0hwVfRc9lV_l8rpCO4znUT2rA3F2byscAv4WKzpybA-Y45wtzTTHuzfyqXg2PGBlP5vTCZP_3LEecAGGkc5zbobdphF3VLjelCYeOfC-SmMi6NYd2s7Ar8ApZCVr7HVP0opTup9qxwqYcnt_eQc2XmGDeQ0-nQUypffvHg09kxhgNGqUDURyaWkj5NPOwyzb0jJ2Cqschk4MaTWLoLlQIXk5PlEXlswC38wVqweaemqICNHHji5wZwqluog"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">EarthRoot Organic Blend</p>
+<p class="text-xs text-on-surface-variant">SKU: ER-OB-440</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right font-headline font-semibold text-on-surface">845 Units</td>
+<td class="px-6 py-5 text-right font-body text-on-surface-variant">$42.00</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-tighter">Healthy</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" title="Edit Product">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Deactivate">
+<span class="material-symbols-outlined text-sm">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Product 4 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Product 4" class="w-full h-full object-cover" data-alt="Large commercial greenhouse ventilation fan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8_2MdBR8TS5t6K3VdQeGxKBiLQD85YIFISzH-yfOLjRAC7LHZNuR4ZECtYAxoARers6WJebesVRQY3Af5rpFcDA0EWUwO3fbS6occu90jUo9SGXuK_xI0kpsdJIBDHBNEoUiVH2Thn3B1H8Vnz_6xZIYwtSk8f5JU33aSI1fNDJOhDQilv3Vje8n7LyngggofBXYE-l4e1WJcRzOG8qR4AXJ3gMSH9z4zP95WA3MBUctNGCaO7OF_sFXs5U7XMhm0l0r87JXWP6Q"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">VeloVent Turbine X</p>
+<p class="text-xs text-on-surface-variant">SKU: VV-TX-202</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right font-headline font-semibold text-on-surface">42 Units</td>
+<td class="px-6 py-5 text-right font-body text-on-surface-variant">$3,150.00</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold uppercase tracking-tighter">Review</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" title="Edit Product">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Deactivate">
+<span class="material-symbols-outlined text-sm">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Product 5 (Restock Alert) -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Product 5" class="w-full h-full object-cover" data-alt="Specialized growth medium substrate blocks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL7EWZlWEeEZ1QtnFCw6k2OhegkHwHHABHykfdupsNo1uqfQNbF_67G2EHNbbC9anBlCkTIrMwcJCLXShJ2UyJE28QgWY07W4T4Ywf_NzPJnf69Gfi5Yl9VvrjUaVq4s5MYIIlgIMjPEa2QilpQieGsww17U_yl583h_lsqb_raESiWrTwjZnTXzCYMUb15GnceUTw_Wgxqt2PSaDmrnqVCfm1H52zq42p6yPlLzVZUDgmZ5lAfilL0a3yZAkx5Qu7kXemjCE9fW4"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Sovereign Growth Substrate</p>
+<p class="text-xs text-on-surface-variant">SKU: SG-SS-118</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="inline-flex flex-col items-end">
+<span class="font-headline font-semibold text-error">8 Units</span>
+<span class="bg-error-container text-on-error-container text-[8px] font-black uppercase px-2 py-0.5 rounded-full mt-1">Restock Alert</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right font-body text-on-surface-variant">$89.90</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold uppercase tracking-tighter">Critical</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" title="Edit Product">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Deactivate">
+<span class="material-symbols-outlined text-sm">block</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footnote -->
+<div class="px-6 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant font-medium">
+<span>Showing 5 of 248 products</span>
+<div class="flex gap-4">
+<button class="hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">chevron_left</span> Previous
+                        </button>
+<button class="hover:text-primary transition-colors flex items-center gap-1">
+                            Next <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual CTA -->
+<section class="bg-gradient-to-br from-primary to-primary-container p-8 rounded-xl text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+<!-- Abstract Texture Overlay -->
+<div class="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+<div class="relative z-10 max-w-xl">
+<h3 class="text-2xl font-black mb-2 tracking-tight">Regional Fulfillment Demand</h3>
+<p class="text-primary-fixed/80 text-sm">We've noticed a 15% increase in orders for 'Ozone Bloom-Max' in the Eastern District. Consider scheduling a bulk restock to optimize logistics costs.</p>
+</div>
+<button class="relative z-10 bg-surface-container-lowest text-primary px-8 py-3 rounded-md font-bold text-sm shadow-xl active:scale-95 transition-transform">
+                    Initiate Bulk Order
+                </button>
+</section>
+</div>
+</main>
+<!-- Floating Action Button - Contextual for Inventory Add -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-transform z-50 group">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'wght' 700;">add</span>
+<span class="absolute right-full mr-4 bg-on-background text-background px-3 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">New Product</span>
+</button>
+</body></html>
