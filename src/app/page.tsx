@@ -75,19 +75,23 @@ export default function Page() {
       // Safety timeout
       const timeout = setTimeout(() => setLoading(false), 3000);
 
-      try {
-        const host = window.location.hostname;
-        let subdomain = host.split('.')[0];
-        if (subdomain === 'localhost' || subdomain === '127') subdomain = 'superozono';
+        try {
+          const host = window.location.hostname;
+          let subdomain = host.split('.')[0];
+          if (subdomain === 'localhost' || subdomain === '127') subdomain = 'superozono';
 
-        const storeData = await storeService.getBySubdomain(subdomain);
-        setStore(storeData);
+          const storeData = await storeService.getBySubdomain(subdomain);
+          setStore(storeData);
 
-        const productsData = await productService.getPublicProducts(subdomain);
-        setProducts(productsData || []);
-      } catch (err) {
-        console.error("Error loading store content:", err);
-      } finally {
+          const productsData = await productService.getPublicProducts(subdomain);
+          setProducts(productsData || []);
+        } catch (err: any) {
+          console.error("Error loading store content:", err);
+          // If store not found, we keep mock products
+          if (err.response?.status === 404) {
+            console.warn("Tienda no encontrada, usando datos de demostración.");
+          }
+        } finally {
         clearTimeout(timeout);
         setLoading(false);
       }
@@ -156,7 +160,7 @@ export default function Page() {
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {loading ? (
             <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="col-span-full py-32 text-center">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />

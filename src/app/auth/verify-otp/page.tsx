@@ -72,7 +72,7 @@ function VerifyOtpForm() {
             Verifica tu correo
           </h1>
           <p className="text-on-surface-variant text-center text-sm font-medium mb-8">
-            Ingresa el código de 6 dígitos enviado a tu correo.
+            Ingresa el código de 6 dígitos enviado a {emailParam || "tu correo"}.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">

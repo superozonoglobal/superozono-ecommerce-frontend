@@ -122,8 +122,8 @@ export default function InventorySection({
 
         {/* Table/List */}
         <div className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-xl overflow-hidden mb-12">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="bg-surface-container-low/50 text-on-surface-variant/60 uppercase text-[10px] font-black tracking-[0.2em]">
                   <th className="px-10 py-6">Producto</th>

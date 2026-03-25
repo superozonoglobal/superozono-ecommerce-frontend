@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { storeService } from "@/services/store.service";
 import { productService } from "@/services/product.service";
@@ -21,7 +22,8 @@ import {
 } from 'recharts';
 
 export default function DistribuidorDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview"); // overview, personalization, inventory
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -34,7 +36,14 @@ export default function DistribuidorDashboard() {
     primaryColor: '#286652',
     secondaryColor: '#515f74',
     logoUrl: '',
-    bannerUrl: ''
+    bannerUrl: '',
+    subdomain: ''
+  });
+
+  const [paymentMethods, setPaymentMethods] = useState({
+    transferencia: true,
+    efectivo: true,
+    tarjeta: false
   });
 
   // Inventory & Orders State
@@ -90,7 +99,8 @@ export default function DistribuidorDashboard() {
           primaryColor: store.primaryColor || '#286652',
           secondaryColor: store.secondaryColor || '#515f74',
           logoUrl: store.logoUrl || '',
-          bannerUrl: store.bannerUrl || ''
+          bannerUrl: store.bannerUrl || '',
+          subdomain: store.subdomain || ''
         });
         // Initial fetch for the active tab if it's not personalization
         if (activeTab === 'inventory') fetchProducts(store.id);
@@ -121,7 +131,7 @@ export default function DistribuidorDashboard() {
     try {
       const data = await orderService.getStoreOrders(storeId);
       setOrders(data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching orders", err);
     } finally {
       setLoadingOrders(false);
@@ -143,7 +153,8 @@ export default function DistribuidorDashboard() {
         primaryColor: branding.primaryColor,
         secondaryColor: branding.secondaryColor,
         logoUrl: branding.logoUrl,
-        bannerUrl: branding.bannerUrl
+        bannerUrl: branding.bannerUrl,
+        subdomain: branding.subdomain
       });
       showToast("Identidad visual actualizada", "success");
       fetchStores();
@@ -176,7 +187,18 @@ export default function DistribuidorDashboard() {
     }
   };
 
-  if (!user || (user.rol !== 'ADMIN' && user.rol !== 'DISTRIBUTOR')) return null;
+  if (isLoading || !user || (user.rol !== 'ADMIN' && user.rol !== 'DISTRIBUTOR')) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-black text-[10px] uppercase tracking-[0.3em] text-on-surface-variant animate-pulse">
+            Sincronizando portal...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-surface relative font-sans overflow-hidden">
@@ -237,6 +259,14 @@ export default function DistribuidorDashboard() {
             <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
             <span className="text-sm font-black tracking-tight">Órdenes</span>
           </button>
+
+          <button 
+            onClick={() => { setActiveTab("payments"); setIsSidebarOpen(false); }} 
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] transition-all group ${activeTab === "payments" ? "bg-primary text-on-primary shadow-xl shadow-primary/20" : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"}`}
+          >
+            <span className="material-symbols-outlined text-[20px]">payments</span>
+            <span className="text-sm font-black tracking-tight">Medios de Pago</span>
+          </button>
         </nav>
 
         <div className="p-6 border-t border-outline-variant/5">
@@ -284,7 +314,12 @@ export default function DistribuidorDashboard() {
               <h2 className="font-headline text-4xl font-black text-on-surface tracking-tighter">Sin Tienda Asignada.</h2>
               <p className="text-on-surface-variant font-medium text-lg leading-relaxed">Tu cuenta de distribuidor aún no tiene una tienda configurada. Contacta al administrador central para activarla.</p>
             </div>
-            <Link href="/" className="px-10 py-4 bg-on-surface text-surface rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shadow-2xl shadow-black/20">Regresar al Inicio</Link>
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <Link href="/" className="px-10 py-4 bg-on-surface text-surface rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shadow-2xl shadow-black/20">Regresar al Inicio</Link>
+              <button onClick={logout} className="px-10 py-4 bg-surface-container-highest text-error rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-error/10 hover:border-error/20 transition-all border border-transparent shadow-sm flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
+              </button>
+            </div>
           </div>
         ) : (
           <div className="p-8 lg:p-12 space-y-12">
@@ -590,8 +625,35 @@ export default function DistribuidorDashboard() {
                         </div>
                       </div>
 
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Subdominio de la Tienda</label>
+                        <div className="flex items-center gap-0">
+                          <input 
+                            type="text" 
+                            value={branding.subdomain} 
+                            onChange={e => setBranding({...branding, subdomain: e.target.value})}
+                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-l-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                            placeholder="mi-tienda"
+                          />
+                          <div className="bg-surface-container-high border-y border-r border-outline-variant/20 rounded-r-2xl py-4 px-6 text-xs font-black text-on-surface-variant/40">
+                            .superozono.com
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">URL del Logotipo</label>
+                        <input 
+                          type="text" 
+                          value={branding.logoUrl} 
+                          onChange={e => setBranding({...branding, logoUrl: e.target.value})}
+                          className="w-full bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                          placeholder="https://ejemplo.com/logo.png"
+                        />
+                      </div>
+
                       <div className="pt-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Logotipo Comercial</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Logotipo Comercial (Subir)</label>
                         <div className="mt-4 border-2 border-dashed border-outline-variant/30 rounded-3xl p-10 text-center bg-surface-container-low/50 hover:bg-surface-container-low transition-all cursor-pointer group shadow-inner">
                           <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 group-hover:text-primary transition-colors mb-4">upload_file</span>
                           <p className="text-sm font-black text-on-surface opacity-80 uppercase tracking-tight">Seleccionar Imagen...</p>
@@ -678,6 +740,52 @@ export default function DistribuidorDashboard() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "payments" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl space-y-12">
+                <header>
+                  <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Configuración de Pagos</h3>
+                  <p className="text-on-surface-variant font-medium opacity-60 text-sm mt-1">Habilita los métodos de pago que tus clientes podrán usar en tu tienda.</p>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {[
+                    { id: 'transferencia', name: 'Transferencia Bancaria', icon: 'account_balance', desc: 'Pago directo a tu cuenta bancaria.' },
+                    { id: 'efectivo', name: 'Efectivo / Contra Entrega', icon: 'payments', desc: 'Ideal para entregas locales y cercanía.' },
+                    { id: 'tarjeta', name: 'Tarjeta de Crédito/Débito', icon: 'credit_card', desc: 'Procesa pagos online con pasarela.' }
+                  ].map((method) => (
+                    <div 
+                      key={method.id}
+                      onClick={() => setPaymentMethods(prev => ({ ...prev, [method.id]: !prev[method.id as keyof typeof paymentMethods] }))}
+                      className={`p-8 rounded-[40px] border-2 transition-all cursor-pointer group flex flex-col justify-between h-64 ${paymentMethods[method.id as keyof typeof paymentMethods] ? 'bg-primary/5 border-primary shadow-xl shadow-primary/10' : 'bg-surface-container-lowest border-outline-variant/10 hover:border-primary/30'}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${paymentMethods[method.id as keyof typeof paymentMethods] ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant'}`}>
+                          <span className="material-symbols-outlined text-2xl">{method.icon}</span>
+                        </div>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${paymentMethods[method.id as keyof typeof paymentMethods] ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant/20'}`}>
+                          {paymentMethods[method.id as keyof typeof paymentMethods] && <span className="material-symbols-outlined text-sm font-black">done</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-headline text-xl font-black text-on-surface tracking-tight leading-none mb-2">{method.name}</h4>
+                        <p className="text-xs font-medium text-on-surface-variant opacity-60 leading-relaxed">{method.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-surface-container-low/50 p-8 rounded-[32px] border border-outline-variant/10 flex items-center justify-between gap-8">
+                  <div className="flex gap-4 items-center">
+                    <span className="material-symbols-outlined text-primary text-3xl">info</span>
+                    <p className="text-xs font-bold text-on-surface-variant leading-relaxed">
+                      Los cambios en los métodos de pago se reflejarán instantáneamente en el checkout de tu tienda pública. Asegúrate de tener configuradas tus cuentas en la sección de perfil.
+                    </p>
+                  </div>
+                  <button className="px-8 py-4 bg-on-surface text-surface rounded-2xl text-[10px] font-black tracking-widest uppercase hover:scale-105 transition-all shadow-xl">Guardar Configuración</button>
                 </div>
               </div>
             )}

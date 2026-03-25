@@ -33,8 +33,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (token && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
-      } catch(e) {}
+        const parsedNode = JSON.parse(storedUser);
+        // Normalize legacy 'role' to 'rol'
+        if (!parsedNode.rol && parsedNode.role) {
+          parsedNode.rol = parsedNode.role;
+        }
+        // Ensure uppercase for strict comparisons across the app
+        if (parsedNode.rol) {
+          parsedNode.rol = String(parsedNode.rol).toUpperCase();
+        }
+
+        // If it's still invalid, clear it
+        if (!parsedNode.rol || !['ROOT_ADMIN', 'ADMIN', 'DISTRIBUTOR'].includes(parsedNode.rol)) {
+          localStorage.removeItem('superozono_access_token');
+          localStorage.removeItem('superozono_user');
+          setUser(null);
+        } else {
+          setUser(parsedNode);
+        }
+      } catch(e) {
+        localStorage.removeItem('superozono_access_token');
+        localStorage.removeItem('superozono_user');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -65,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: loginData.user.id,
         nombre: loginData.user.firstName + (loginData.user.lastName ? ' ' + loginData.user.lastName : ''),
         email: loginData.user.email,
-        rol: loginData.user.role,
+        rol: String(loginData.user.role).toUpperCase() as UserRole,
       };
       
       localStorage.setItem('superozono_access_token', loginData.token);

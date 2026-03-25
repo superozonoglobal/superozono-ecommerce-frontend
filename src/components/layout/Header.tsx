@@ -50,15 +50,7 @@ export default function Header() {
               </span>
             )}
           </Link>
-          <div className="hidden sm:block w-8 h-8 rounded-full overflow-hidden border border-primary-fixed-dim">
-            <Link href="/login">
-              <img 
-                className="w-full h-full object-cover cursor-pointer" 
-                alt="User profile" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBkaQRFGnrACxRKPTswAMkhyoJsNRqUlY7UWGK-F8b5guChjFClxpupu58ORzVRLFuqFbF4zrsNuXOJWtnK8A7EXJwVzvSvirBtD-jexTdqAMmFydrxOYXASXbFBxQ1sx03XwNQIUN1czFTWHZUNOPrymxvy-3HFP7XYlR01DUO2-LQKy1qod8b8m1zbzXQVVAss3-YqkTa1IcC6-YTFznTCIju76Ss4PZq7feYPo51lvAXjE4LKWUYl4zciG4HscazLFG0uApmiI"
-              />
-            </Link>
-          </div>
+          {/* Perfil/Login link removed for public isolation */}
           
           {/* Mobile Menu Button */}
           <button 
@@ -88,12 +80,7 @@ export default function Header() {
             <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">SOLUCIONES</a>
             <a onClick={() => setIsOpen(false)} className="text-xl font-headline font-bold text-on-surface-variant tracking-tight" href="#">IMPACTO</a>
           </div>
-          <div className="mt-auto pt-8 border-t border-surface-container flex flex-col gap-4">
-             <Link href="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-5 bg-surface-container-low rounded-3xl font-black text-xs uppercase tracking-widest text-primary">
-                <span className="material-symbols-outlined">person</span> 
-                MI CUENTA MAESTRA
-             </Link>
-          </div>
+          {/* Mobile Profile/Login link removed for public isolation */}
         </motion.div>
       )}
     </AnimatePresence>

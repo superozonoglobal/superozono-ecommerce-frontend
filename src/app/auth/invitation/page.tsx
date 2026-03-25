@@ -28,11 +28,10 @@ function InvitationForm() {
     setLoading(true);
     setError("");
     try {
-      // Simulate/Connect registerPassword
-      await authService.registerPassword(token, password);
-      // If the backend returns the email or we had it, we redirect to OTP
-      // For now, let's assume we need to verify email
-      router.push(`/auth/verify-otp?token=${token}`);
+      const response = await authService.registerPassword(token, password);
+      // Pass email to verify-otp for the next step
+      const email = response?.email || "";
+      router.push(`/auth/verify-otp?token=${token}&email=${email}`);
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al establecer la contraseña.");
     } finally {
@@ -57,7 +56,7 @@ function InvitationForm() {
             SuperOzono
           </h1>
           <p className="text-on-surface-variant text-center text-sm font-medium mb-8">
-            Establece la contraseña para tu nueva tienda.
+            Establece la contraseña para tu nueva tienda y activa tu cuenta.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
