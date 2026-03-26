@@ -33,18 +33,20 @@ export const productService = {
     return response.data.data;
   },
 
-  // Update Inventory / Stock
-  updateStock: async (productId: string, quantity: number, minStockAlert: number): Promise<any> => {
-    const response = await apiClient.put<ApiResponse<any>>(`/inventory/products/${productId}`, {
-      quantity,
-      minStockAlert,
-    });
+  // Get Product by ID
+  getProductById: async (id: string): Promise<Product> => {
+    const response = await apiClient.get<ApiResponse<Product>>(`/products/${id}`);
     return response.data.data;
   },
 
-  // Low Stock Alerts
-  getLowStockAlerts: async (storeId: string): Promise<Product[]> => {
-    const response = await apiClient.get<ApiResponse<Product[]>>(`/stores/${storeId}/inventory/low-stock`);
+  // Update Product
+  updateProduct: async (id: string, productData: Partial<Product>): Promise<Product> => {
+    const response = await apiClient.put<ApiResponse<Product>>(`/products/${id}`, productData);
     return response.data.data;
+  },
+
+  // Delete Product
+  deleteProduct: async (id: string): Promise<void> => {
+    await apiClient.delete(`/products/${id}`);
   },
 };

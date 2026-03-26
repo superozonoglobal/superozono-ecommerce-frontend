@@ -28,9 +28,10 @@ function InvitationForm() {
     setLoading(true);
     setError("");
     try {
-      const response = await authService.registerPassword(token, password);
-      // Pass email to verify-otp for the next step
-      const email = response?.email || "";
+      const response = await authService.activateAccount(token, password);
+      // Pass email to verify-otp for the next step.
+      // Response from activateAccount is an ApiResponse wrapper, e.g., { data: { email: "..." } }
+      const email = response?.data?.email || response?.email || "";
       router.push(`/auth/verify-otp?token=${token}&email=${email}`);
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al establecer la contraseña.");

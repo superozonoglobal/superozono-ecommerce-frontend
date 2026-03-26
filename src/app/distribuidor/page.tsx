@@ -59,6 +59,9 @@ export default function DistribuidorDashboard() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editPriceError, setEditPriceError] = useState("");
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -68,6 +71,9 @@ export default function DistribuidorDashboard() {
     quantity: 0
   });
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const [newStore, setNewStore] = useState({ name: '', subdomain: '', address: '', phone: '' });
+  const [isCreatingStore, setIsCreatingStore] = useState(false);
 
   const salesData = [
     { name: 'Sem 1', sales: 400 },
@@ -80,6 +86,22 @@ export default function DistribuidorDashboard() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  const handleCreateStore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsCreatingStore(true);
+    try {
+      await storeService.createStore(newStore);
+      showToast("¡Tienda creada exitosamente!", "success");
+      fetchStores();
+    } catch (error: any) {
+      console.error("Error al crear tienda", error);
+      showToast(error.response?.data?.message || "Error al crear la tienda", "error");
+    } finally {
+      setIsCreatingStore(false);
+    }
+  };
+
 
   useEffect(() => {
     if (user?.rol === 'ADMIN' || user?.rol === 'DISTRIBUTOR') {
@@ -182,6 +204,37 @@ export default function DistribuidorDashboard() {
     } catch (error) {
       console.error("Error creating product", error);
       showToast("Error al crear producto", "error");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleEditProductPrice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    
+    // Validate bounds
+    if (editingProduct.minPrice && editingProduct.basePrice < editingProduct.minPrice) {
+      setEditPriceError(`El precio no puede ser menor a $${editingProduct.minPrice}`);
+      return;
+    }
+    if (editingProduct.maxPrice && editingProduct.basePrice > editingProduct.maxPrice) {
+      setEditPriceError(`El precio no puede exceder $${editingProduct.maxPrice}`);
+      return;
+    }
+
+    setEditPriceError("");
+    setIsUpdating(true);
+    try {
+      await productService.updateProduct(editingProduct.id, {
+        basePrice: editingProduct.basePrice
+      });
+      showToast("Precio actualizado correctamente", "success");
+      setShowEditProductModal(false);
+      if (activeStore) fetchProducts(activeStore.id);
+    } catch (error) {
+      console.error("Error updating price", error);
+      showToast("Error al actualizar precio", "error");
     } finally {
       setIsUpdating(false);
     }
@@ -306,19 +359,82 @@ export default function DistribuidorDashboard() {
             <p className="text-sm font-black text-on-surface-variant uppercase tracking-widest italic">Sincronizando Tienda...</p>
           </div>
         ) : !activeStore ? (
-          <div className="h-full flex flex-col items-center justify-center p-12 text-center max-w-2xl mx-auto space-y-8">
-            <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center shadow-inner">
-              <span className="material-symbols-outlined text-5xl text-primary opacity-40">store_off</span>
-            </div>
-            <div className="space-y-2">
-              <h2 className="font-headline text-4xl font-black text-on-surface tracking-tighter">Sin Tienda Asignada.</h2>
-              <p className="text-on-surface-variant font-medium text-lg leading-relaxed">Tu cuenta de distribuidor aún no tiene una tienda configurada. Contacta al administrador central para activarla.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <Link href="/" className="px-10 py-4 bg-on-surface text-surface rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shadow-2xl shadow-black/20">Regresar al Inicio</Link>
-              <button onClick={logout} className="px-10 py-4 bg-surface-container-highest text-error rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-error/10 hover:border-error/20 transition-all border border-transparent shadow-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">logout</span> Cerrar Sesión
-              </button>
+          <div className="min-h-full p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto">
+            <div className="bg-surface-container-lowest p-10 rounded-[40px] border border-outline-variant/10 shadow-xl space-y-8 mt-12">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary mb-6 shadow-inner">
+                  <span className="material-symbols-outlined text-4xl">storefront</span>
+                </div>
+                <h2 className="font-headline text-3xl font-black text-on-surface tracking-tighter">Activa tu Tienda</h2>
+                <p className="text-on-surface-variant font-medium mt-2 leading-relaxed text-sm">Configura la información inicial y elige tu subdominio para comenzar a vender inmediatamente.</p>
+              </div>
+
+              <form onSubmit={handleCreateStore} className="space-y-6">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1 border-l-2 border-primary pl-2">Información Básica</label>
+                  <div className="grid gap-4">
+                    <input 
+                      required
+                      type="text" 
+                      value={newStore.name} 
+                      onChange={e => setNewStore({...newStore, name: e.target.value})}
+                      className="w-full bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                      placeholder="Nombre de la Tienda (Ej: EcoTienda)"
+                    />
+                    <input 
+                      required
+                      type="text" 
+                      value={newStore.phone} 
+                      onChange={e => setNewStore({...newStore, phone: e.target.value})}
+                      className="w-full bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                      placeholder="Teléfono de Contacto"
+                    />
+                    <input 
+                      required
+                      type="text" 
+                      value={newStore.address} 
+                      onChange={e => setNewStore({...newStore, address: e.target.value})}
+                      className="w-full bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                      placeholder="Dirección Física"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-1 border-l-2 border-primary pl-2">Enlace de tu Tienda</label>
+                  <div className="flex items-center gap-0">
+                    <input 
+                      required
+                      type="text" 
+                      value={newStore.subdomain} 
+                      onChange={e => setNewStore({...newStore, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
+                      className="flex-1 bg-surface-container border border-outline-variant/20 rounded-l-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
+                      placeholder="mi-tienda-genial"
+                    />
+                    <div className="bg-surface-container-high border-y border-r border-outline-variant/20 rounded-r-2xl py-4 px-6 text-xs font-black text-on-surface-variant/40">
+                      .superozono.com
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant font-bold opacity-60 ml-2">Solo letras, números y guiones. Sin espacios ni tildes.</p>
+                </div>
+
+                <div className="pt-4 border-t border-outline-variant/10 flex flex-col gap-3">
+                  <button 
+                    disabled={isCreatingStore}
+                    type="submit"
+                    className="w-full py-5 bg-on-surface text-surface rounded-[24px] font-black text-sm tracking-widest uppercase hover:scale-[1.02] transition-all active:scale-95 shadow-xl disabled:opacity-50"
+                  >
+                    {isCreatingStore ? 'CREANDO...' : 'ACTIVAR TIENDA AHORA'}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={logout} 
+                    className="w-full py-4 text-on-surface-variant font-black text-xs tracking-widest uppercase hover:bg-error/10 hover:text-error rounded-2xl transition-colors"
+                  >
+                    CERRAR SESIÓN POR AHORA
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         ) : (
@@ -518,7 +634,14 @@ export default function DistribuidorDashboard() {
                             </span>
                           </td>
                           <td className="px-8 py-6 text-right">
-                            <button className="p-3 text-secondary hover:bg-secondary/10 rounded-2xl transition-all">
+                            <button 
+                              onClick={() => {
+                                setEditingProduct(product);
+                                setShowEditProductModal(true);
+                                setEditPriceError("");
+                              }}
+                              className="p-3 text-secondary hover:bg-secondary/10 rounded-2xl transition-all"
+                            >
                               <span className="material-symbols-outlined">edit</span>
                             </button>
                           </td>
@@ -577,167 +700,218 @@ export default function DistribuidorDashboard() {
             )}
 
             {activeTab === "personalization" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid grid-cols-12 gap-12">
-                {/* Branding Form */}
-                <div className="col-span-12 lg:col-span-5 space-y-10">
-                  <section className="bg-surface-container-lowest p-10 rounded-[40px] border border-outline-variant/10 shadow-sm space-y-8">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[28px]">palette</span>
-                      </div>
-                      <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter">Identidad Visual</h3>
-                    </div>
-
-                    <div className="space-y-8">
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Color Primario (Marca)</label>
-                        <div className="flex items-center gap-4">
-                          <input 
-                            type="color" 
-                            value={branding.primaryColor} 
-                            onChange={e => setBranding({...branding, primaryColor: e.target.value})}
-                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-surface shadow-lg overflow-hidden flex-shrink-0"
-                          />
-                          <input 
-                            type="text" 
-                            value={branding.primaryColor} 
-                            onChange={e => setBranding({...branding, primaryColor: e.target.value})}
-                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold font-mono text-on-surface"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Color Secundario (Acentos)</label>
-                        <div className="flex items-center gap-4">
-                          <input 
-                            type="color" 
-                            value={branding.secondaryColor} 
-                            onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
-                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-surface shadow-lg overflow-hidden flex-shrink-0"
-                          />
-                          <input 
-                            type="text" 
-                            value={branding.secondaryColor} 
-                            onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
-                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold font-mono text-on-surface"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Subdominio de la Tienda</label>
-                        <div className="flex items-center gap-0">
-                          <input 
-                            type="text" 
-                            value={branding.subdomain} 
-                            onChange={e => setBranding({...branding, subdomain: e.target.value})}
-                            className="flex-1 bg-surface-container border border-outline-variant/20 rounded-l-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
-                            placeholder="mi-tienda"
-                          />
-                          <div className="bg-surface-container-high border-y border-r border-outline-variant/20 rounded-r-2xl py-4 px-6 text-xs font-black text-on-surface-variant/40">
-                            .superozono.com
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">URL del Logotipo</label>
-                        <input 
-                          type="text" 
-                          value={branding.logoUrl} 
-                          onChange={e => setBranding({...branding, logoUrl: e.target.value})}
-                          className="w-full bg-surface-container border border-outline-variant/20 rounded-2xl py-4 px-6 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary/20 outline-none"
-                          placeholder="https://ejemplo.com/logo.png"
-                        />
-                      </div>
-
-                      <div className="pt-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Logotipo Comercial (Subir)</label>
-                        <div className="mt-4 border-2 border-dashed border-outline-variant/30 rounded-3xl p-10 text-center bg-surface-container-low/50 hover:bg-surface-container-low transition-all cursor-pointer group shadow-inner">
-                          <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 group-hover:text-primary transition-colors mb-4">upload_file</span>
-                          <p className="text-sm font-black text-on-surface opacity-80 uppercase tracking-tight">Seleccionar Imagen...</p>
-                          <p className="text-[10px] text-on-surface-variant mt-2 font-bold opacity-40">SVG, PNG o WEBP (Máx 2MB)</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button 
-                      onClick={handleUpdateBranding}
-                      disabled={isUpdating}
-                      className="w-full py-5 bg-on-surface text-surface rounded-[24px] font-black text-sm tracking-widest uppercase hover:scale-[1.02] transition-all active:scale-95 shadow-2xl disabled:opacity-50"
-                    >
-                      {isUpdating ? 'GUARDANDO...' : 'GUARDAR IDENTIDAD'}
-                    </button>
-                  </section>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="mb-12">
+                  <h2 className="text-4xl font-extrabold text-on-surface tracking-tight mb-2 uppercase">Storefront Customization</h2>
+                  <p className="text-on-surface-variant text-lg max-w-2xl">Define your brand identity and preview how your distributors will experience your digital storefront.</p>
                 </div>
 
-                {/* Preview Column */}
-                <div className="col-span-12 lg:col-span-7 space-y-6">
-                  <div className="sticky top-12">
-                    <div className="flex items-center justify-between mb-4 px-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Previsualización en Vivo</p>
-                      <div className="flex gap-2">
-                         <div className="w-2 h-2 rounded-full bg-error/20"></div>
-                         <div className="w-2 h-2 rounded-full bg-secondary/20"></div>
-                         <div className="w-2 h-2 rounded-full bg-primary/20"></div>
+                {/* Bento Grid Layout */}
+                <div className="grid grid-cols-12 gap-8">
+                  {/* Left Column: Settings */}
+                  <div className="col-span-12 lg:col-span-5 space-y-8">
+                    
+                    {/* Branding Card */}
+                    <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-transparent">
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="material-symbols-outlined text-primary">palette</span>
+                        <h3 className="text-xl font-bold tracking-tight">Brand Identity</h3>
                       </div>
-                    </div>
-                    {/* Mockup Frame */}
-                    <div className="bg-surface-container-highest rounded-[48px] p-2 shadow-2xl border border-white/40 overflow-hidden ring-1 ring-black/5">
-                      <div className="bg-surface-container-lowest rounded-[40px] overflow-hidden min-h-[650px] flex flex-col relative scale-100 origin-top">
-                        {/* Mockup Top Nav */}
-                        <div className="px-8 py-5 flex justify-between items-center bg-white border-b border-surface-container">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-xl" style={{ backgroundColor: branding.primaryColor }}>
-                               <span className="material-symbols-outlined text-sm font-variation-fill">eco</span>
-                            </div>
-                            <span className="font-headline font-black text-xs tracking-tighter uppercase">{activeStore.name}</span>
-                          </div>
-                          <div className="flex gap-6 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
-                            <span className="text-on-surface" style={{ color: branding.primaryColor }}>Inicio</span>
-                            <span>Catálogo</span>
-                            <span>Nosotros</span>
+
+                      {/* Color Pickers */}
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Primary Branding Color</label>
+                          <div className="flex items-center gap-4">
+                            <input 
+                              type="color" 
+                              value={branding.primaryColor} 
+                              onChange={e => setBranding({...branding, primaryColor: e.target.value})}
+                              className="w-12 h-12 rounded-lg cursor-pointer border-4 border-surface shadow-md p-0 flex-shrink-0"
+                            />
+                            <input 
+                              type="text" 
+                              value={branding.primaryColor} 
+                              onChange={e => setBranding({...branding, primaryColor: e.target.value})}
+                              className="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-mono"
+                            />
                           </div>
                         </div>
 
-                        {/* Mockup Hero */}
-                        <div className="relative h-60 overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent z-10"></div>
-                          <img 
-                            src="https://images.unsplash.com/photo-1582560475093-ba66accbc424?q=80&w=2000&auto=format&fit=crop" 
-                            className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-[20s] hover:scale-125"
-                            alt="Plant background"
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Secondary Accent Color</label>
+                          <div className="flex items-center gap-4">
+                             <input 
+                              type="color" 
+                              value={branding.secondaryColor} 
+                              onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
+                              className="w-12 h-12 rounded-lg cursor-pointer border-4 border-surface shadow-md p-0 flex-shrink-0"
+                            />
+                            <input 
+                              type="text" 
+                              value={branding.secondaryColor} 
+                              onChange={e => setBranding({...branding, secondaryColor: e.target.value})}
+                              className="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Store Details Input */}
+                      <div className="mt-8 space-y-6">
+                        <div>
+                           <label className="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Subdominio de la Tienda</label>
+                           <div className="flex items-center gap-0">
+                             <input 
+                               type="text" 
+                               value={branding.subdomain} 
+                               onChange={e => setBranding({...branding, subdomain: e.target.value})}
+                               className="flex-1 bg-surface-container-low border-none rounded-l-lg px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                               placeholder="mi-tienda"
+                             />
+                             <div className="bg-surface-container border-y border-r border-transparent rounded-r-lg px-4 py-3 text-xs font-bold text-on-surface-variant/60">
+                               .superozono.com
+                             </div>
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Logo Upload */}
+                      <div className="mt-8">
+                        <label className="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Brand Logo</label>
+                        <div className="border-2 border-dashed border-outline-variant rounded-xl p-8 text-center bg-surface-container-low/30 hover:bg-surface-container-low transition-colors cursor-pointer group">
+                          <span className="material-symbols-outlined text-4xl text-outline-variant group-hover:text-primary transition-colors mb-2">upload_file</span>
+                          <p className="text-sm font-medium text-on-surface">Drag and drop your logo here</p>
+                          <p className="text-xs text-on-surface-variant mt-1">PNG, SVG or WEBP (Max 2MB)</p>
+                        </div>
+                         <input 
+                            type="text" 
+                            value={branding.logoUrl} 
+                            onChange={e => setBranding({...branding, logoUrl: e.target.value})}
+                            className="w-full mt-4 bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                            placeholder="o pega la URL de tu logo aquí"
                           />
-                          <div className="absolute inset-0 z-20 flex flex-col justify-center p-10 text-white space-y-4">
-                            <h4 className="text-4xl font-black leading-[0.9] tracking-tighter max-w-xs">TECNOLOGÍA EN OXIGENACIÓN.</h4>
-                            <button className="px-8 py-3 w-fit text-black font-black text-[10px] tracking-widest uppercase rounded-full shadow-2xl hover:scale-110 transition-all" style={{ backgroundColor: branding.primaryColor, color: '#ffffff' }}>EXPLORAR PRODUCTOS</button>
-                          </div>
-                        </div>
+                      </div>
+                    </section>
 
-                        {/* Mockup Grid */}
-                        <div className="p-10 flex-1 bg-surface-container-low/30 grid grid-cols-2 gap-6">
-                          {[1, 2].map(i => (
-                            <div key={i} className="space-y-4 group">
-                              <div className="aspect-[4/5] bg-white rounded-[32px] overflow-hidden shadow-sm border border-outline-variant/10 p-2">
-                                <div className="w-full h-full bg-surface-container rounded-[24px] flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity overflow-hidden">
-                                   <img src={`https://images.unsplash.com/photo-1542156822-6924d1a71ace?q=80&w=500&auto=format&fit=crop`} className="w-full h-full object-cover" alt="Product" />
-                                </div>
-                              </div>
-                              <div className="px-2 space-y-1">
-                                <div className="h-4 w-3/4 bg-on-surface/5 rounded-full"></div>
-                                <div className="h-3 w-1/2 bg-on-surface/5 rounded-full opacity-40"></div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Mockup Sticky Badge */}
-                        <div className="absolute bottom-6 right-6 z-30 flex items-center gap-3 px-5 py-3 rounded-full bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl group cursor-pointer hover:bg-white/60 transition-all">
-                           <div className="w-3 h-3 rounded-full animate-ping" style={{ backgroundColor: branding.primaryColor }}></div>
-                           <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Tienda en Vivo</span>
+                    {/* Banner Customization */}
+                    <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="material-symbols-outlined text-primary">image</span>
+                        <h3 className="text-xl font-bold tracking-tight">Banner Image</h3>
+                      </div>
+                      <div className="relative group overflow-hidden rounded-xl aspect-[21/9] mb-4">
+                        <img 
+                          alt="Banner Preview" 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWg94njWrjlhJZPpOAXxT5ZSZikI7Ak9rjyfbBA39lK6QYo6_ZSlkWvI9FZOIZtgKsRcrQhshRwa_zUpQfhW2sAxCNjk0KQBigZR2bDRb7fc4QhaWlzQbXTDYcalDXN2gPX-njLdpsi3n1EiJ5gN0oKDQ3yy-kbIUPoxpuSZHhh7PhQdIF2QVtZB7zpfUMorO_9bSnLme9T1LjGcZOFMzBI58sKksXUdVq4PhHl4lB0NPuLn3O4-i0Wx1ogm4-9pLzgVgMnAB35XI"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <button className="bg-white/20 backdrop-blur-md text-white px-6 py-2 rounded-full font-bold text-sm border border-white/30 hover:bg-white/40 transition-all">Replace Image</button>
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <div className="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+                        <div className="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+                        <div className="h-12 w-12 rounded-lg bg-surface-container-high animate-pulse"></div>
+                        <button className="h-12 px-4 rounded-lg bg-surface-container-low text-xs font-bold text-outline hover:bg-surface-container transition-colors">Browse Stock</button>
+                      </div>
+                    </section>
+                  </div>
+
+                  {/* Right Column: Live Preview & Save */}
+                  <div className="col-span-12 lg:col-span-7">
+                    <div className="sticky top-28">
+                      <div className="flex items-center justify-between mb-4 px-2">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-outline">Live Store Preview</h3>
+                        <div className="flex gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-error/40"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-tertiary/40"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-primary/40"></span>
+                        </div>
+                      </div>
+
+                      {/* Embedded Mini-Mockup (Glassmorphism + Editorial) */}
+                      <div className="bg-surface-container-highest rounded-2xl p-1 shadow-2xl overflow-hidden border border-white/20">
+                        <div className="bg-surface-container-lowest rounded-xl overflow-hidden min-h-[600px] flex flex-col">
+                          {/* Mockup Nav */}
+                          <div className="px-6 py-4 flex justify-between items-center border-b border-surface-container">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-sm" style={{ backgroundColor: branding.primaryColor }}></div>
+                              <span className="font-headline font-bold text-xs tracking-tight uppercase" style={{ color: branding.primaryColor }}>{activeStore?.name || 'VERDANT DISTRO'}</span>
+                            </div>
+                            <div className="flex gap-4 text-[10px] font-bold text-outline uppercase tracking-tighter">
+                              <span>Products</span>
+                              <span>Orders</span>
+                              <span>Support</span>
+                            </div>
+                          </div>
+
+                          {/* Mockup Hero */}
+                          <div className="relative h-48">
+                            <img 
+                              alt="Banner Preview Small" 
+                              className="w-full h-full object-cover" 
+                              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzhZe7DzageO5npT5nVTOfp9fcuuy63jbbRP22oA8v4oBVr_b6KM1InOB6afuQN4pap6L-Ds4QdAFE4yTZ6dt1Ckfa095FSSTAKaktaiwmMKUQ6h6bH7VZyG3XkBItqQj5ZeowIyPULT738bP3AFr4MEbBKJnb87s6lWIb3EAM7a1jhKXIjSC1DbURubqB7tGVEmWX7ZXSe_TiKco4J-iT5hDY6bUHWizkMCyc-F6aSN3AuFCDvA_bHbBuUGHqYQ0GIjimWHy0wK4"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6" style={{ background: `linear-gradient(to top, ${branding.primaryColor}E6, transparent)`}}>
+                              <div className="text-white">
+                                <h4 className="text-2xl font-extrabold leading-tight">Nature's Precision,<br/>Delivered.</h4>
+                                <button className="mt-3 px-4 py-1.5 bg-white rounded-sm font-bold text-[10px] uppercase shadow-sm" style={{ color: branding.primaryColor }}>Shop Catalog</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Mockup Content */}
+                          <div className="p-6 flex-1 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <div className="aspect-square bg-surface-container-low rounded-lg overflow-hidden group">
+                                  <img alt="Product 1" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvWiqcH4Mh_2oeZrTQ3EUAQhPisaJZsuDjPYp77Y03c8gG5cgAPMPqHfV4tuL_6vgjI98_apOnqG4jq3-Xk_iR6LmGoX_kPekA1JTvwcTX2wcW6vF40APkaxQYfkc1z5tTJZyPymG0t_kNcyuMY8xq7ns5wR7r5ZxBPM5FodT6zUJXB_woRc_Kf-RfEEhCbjgXssTT5PI9TZv5_cvZkGKi7AqCfBa-ELrrLDLIeG2gbSd_DIIi92yxc3fddmCtKwrgBl27ppOs_ZE"/>
+                                </div>
+                                <div className="h-2 w-3/4 bg-surface-container rounded-full"></div>
+                                <div className="h-2 w-1/2 bg-surface-container-low rounded-full"></div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="aspect-square bg-surface-container-low rounded-lg overflow-hidden">
+                                  <img alt="Product 2" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj5MF_E27NRDsCiyDdtQWoBfIdUs2HIoG0c-9znDkjb--EsMR-Rx91a53IaMq_y3kezRBdIz0ts7pC72ehYhv8VW8Ue2o_A6Spq-uyYcWGw48kvZcz-jub9Eh_wqQOMep_bcb2pAX7qPCN9JdiYNDj82sCOsfokeX2DFId9JJOy_IojvxygYyDOkYUQgsAt1czk0pggm5CcM14j3MjpQFQjWorBRbM5K_OG0FhqVMDi_J6-EZs8jVGWVytN3ZBc_o-61zHp1B98eQ"/>
+                                </div>
+                                <div className="h-2 w-3/4 bg-surface-container rounded-full"></div>
+                                <div className="h-2 w-1/2 bg-surface-container-low rounded-full"></div>
+                              </div>
+                            </div>
+                            
+                            <div className="p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: `${branding.primaryColor}1A`, border: `1px solid ${branding.primaryColor}33` }}>
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}33` }}>
+                                <span className="material-symbols-outlined text-sm" style={{ color: branding.primaryColor }}>bolt</span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="h-2 w-1/2 rounded-full mb-1" style={{ backgroundColor: `${branding.primaryColor}33` }}></div>
+                                <div className="h-2 w-full rounded-full" style={{ backgroundColor: `${branding.primaryColor}1A` }}></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Preview Badge */}
+                          <div className="bg-surface-container text-center py-2">
+                            <p className="text-[9px] font-bold text-outline uppercase tracking-widest">Interactive Preview Mode</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="mt-8 flex items-center justify-end gap-4">
+                        <button className="px-6 py-3 text-sm font-bold text-outline hover:text-on-surface transition-colors uppercase tracking-widest">Descargar Cambios</button>
+                        <button 
+                          onClick={handleUpdateBranding} 
+                          disabled={isUpdating}
+                          className="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-white rounded-md font-bold text-sm shadow-xl hover:opacity-90 transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50"
+                        >
+                          {isUpdating ? 'Actualizando...' : 'Publicar Tienda'}
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 </div>
@@ -792,6 +966,13 @@ export default function DistribuidorDashboard() {
           </div>
         )}
       </main>
+
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[200] px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm text-white animate-in fade-in slide-in-from-top-4 ${toast.type === 'success' ? 'bg-[#286652]' : 'bg-error'}`}>
+          <span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
+          {toast.message}
+        </div>
+      )}
 
       {/* NEW PRODUCT MODAL */}
       {showProductModal && (
@@ -851,6 +1032,52 @@ export default function DistribuidorDashboard() {
           </div>
         </div>
       )}
+      {/* EDIT PRICE MODAL */}
+      {showEditProductModal && editingProduct && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="bg-surface-container-lowest w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden border border-outline-variant/10 animate-in fade-in zoom-in duration-300">
+            <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-primary/[0.02]">
+              <h3 className="font-headline text-xl font-black text-on-surface tracking-tighter uppercase">Fijar Precio</h3>
+              <button onClick={() => setShowEditProductModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-error/10 hover:text-error transition-all">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleEditProductPrice} className="p-8 space-y-6">
+               <div className="space-y-4 text-center">
+                 <p className="font-black text-on-surface text-lg">{editingProduct.name}</p>
+                 <div className="flex items-center justify-center gap-4 text-xs font-bold text-on-surface-variant/60 bg-surface-container-low p-3 rounded-xl border border-outline-variant/5">
+                   {editingProduct.minPrice && <span>Mínimo: ${editingProduct.minPrice}</span>}
+                   {editingProduct.maxPrice && <span>Máximo: ${editingProduct.maxPrice}</span>}
+                 </div>
+               </div>
+               
+               <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 px-1">Precio de Venta (Público)</label>
+                 <div className="relative">
+                   <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-on-surface-variant/40">$</span>
+                   <input 
+                     required 
+                     type="number" 
+                     step="0.01" 
+                     value={editingProduct.basePrice} 
+                     onChange={e => setEditingProduct({...editingProduct, basePrice: parseFloat(e.target.value)})} 
+                     className={`w-full bg-surface-container border pl-10 pr-5 py-4 ${editPriceError ? 'border-error/50 focus:ring-error/20' : 'border-outline-variant/30 focus:ring-primary/10'} rounded-2xl text-lg font-black text-primary focus:ring-4 outline-none transition-all`} 
+                     placeholder="0.00" 
+                   />
+                 </div>
+                 {editPriceError && <p className="text-[10px] font-bold text-error px-1 mt-1">{editPriceError}</p>}
+               </div>
+               
+               <div className="pt-4">
+                 <button disabled={isUpdating} type="submit" className="w-full py-4 bg-on-surface text-surface rounded-[20px] font-black text-xs tracking-[0.2em] uppercase hover:scale-[1.02] transition-all active:scale-95 shadow-xl disabled:opacity-50">
+                    {isUpdating ? 'GUARDANDO...' : 'GUARDAR PRECIO'}
+                 </button>
+               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

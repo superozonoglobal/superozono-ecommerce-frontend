@@ -12,7 +12,6 @@ async function test() {
         const token = loginResp.data.data.token;
         const headers = { Authorization: `Bearer ${token}` };
 
-        console.log("1. Creating dummy user...");
         try {
             const res1 = await axios.post(`${API_BASE_URL}/users`, {
                 firstName: "Upsert",
@@ -22,7 +21,7 @@ async function test() {
                 password: "OldPassword123!"
             }, { headers });
             console.log("User created:", res1.data.data.id);
-        } catch(e: any) {
+        } catch (e: any) {
             console.log("Pre-existing user or error:", e.response?.data);
         }
 
@@ -39,4 +38,4 @@ async function test() {
         console.log("Fatal Error:", e.response?.status, JSON.stringify(e.response?.data));
     }
 }
-test();
+test();       

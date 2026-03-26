@@ -42,6 +42,8 @@ export interface Product {
   sku: string;
   category: string;
   basePrice: number;
+  minPrice?: number;
+  maxPrice?: number;
   quantity: number;
   minStockAlert: number;
   status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';

@@ -56,9 +56,9 @@ export const authService = {
     return response.data.data;
   },
 
-  // Set Password for Invitation
-  registerPassword: async (token: string, password: string): Promise<any> => {
-    const response = await apiClient.post('/auth/register-password', { token, password });
+  // Set Password for Invitation (Activate Account)
+  activateAccount: async (token: string, password: string): Promise<any> => {
+    const response = await apiClient.post('/auth/activate', { token, password });
     return response.data;
   },
 
