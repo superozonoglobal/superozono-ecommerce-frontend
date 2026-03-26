@@ -57,6 +57,14 @@ export default function DistribuidorDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
+  const [isInvoiceDrawerOpen, setIsInvoiceDrawerOpen] = useState(false);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any>(null);
+
+  const openInvoiceDrawer = (order: any) => {
+    setSelectedInvoiceOrder(order);
+    setIsInvoiceDrawerOpen(true);
+  };
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
@@ -76,11 +84,40 @@ export default function DistribuidorDashboard() {
   const [isCreatingStore, setIsCreatingStore] = useState(false);
 
   const salesData = [
-    { name: 'Sem 1', sales: 400 },
-    { name: 'Sem 2', sales: 700 },
-    { name: 'Sem 3', sales: 600 },
-    { name: 'Sem 4', sales: 900 },
+    { name: 'Lun', sales: 400, target: 500 },
+    { name: 'Mar', sales: 700, target: 400 },
+    { name: 'Mié', sales: 600, target: 650 },
+    { name: 'Jue', sales: 900, target: 800 },
+    { name: 'Vie', sales: 1200, target: 950 },
+    { name: 'Sáb', sales: 850, target: 750 },
+    { name: 'Dom', sales: 1450, target: 1100 },
   ];
+
+  // Logic for Top Products by Revenue
+  const getTopProductsByRevenue = () => {
+    const revenueMap: Record<string, { name: string, revenue: number, quantity: number, stock: number }> = {};
+    
+    // Map existing products to have stock info ready
+    products.forEach(p => {
+      revenueMap[p.id] = { name: p.name, revenue: 0, quantity: 0, stock: p.quantity };
+    });
+
+    // Accumulate revenue from orders
+    orders.forEach(order => {
+      order.items?.forEach((item: any) => {
+        if (revenueMap[item.productId]) {
+          revenueMap[item.productId].revenue += (item.price || 0) * (item.quantity || 0);
+          revenueMap[item.productId].quantity += (item.quantity || 0);
+        }
+      });
+    });
+
+    return Object.values(revenueMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 4);
+  };
+
+  const topProducts = getTopProductsByRevenue();
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -125,8 +162,8 @@ export default function DistribuidorDashboard() {
           subdomain: store.subdomain || ''
         });
         // Initial fetch for the active tab if it's not personalization
-        if (activeTab === 'inventory') fetchProducts(store.id);
-        if (activeTab === 'orders') fetchOrders(store.id);
+        if (activeTab === 'inventory' || activeTab === 'overview') fetchProducts(store.id);
+        if (activeTab === 'orders' || activeTab === 'overview') fetchOrders(store.id);
       }
     } catch (err) {
       console.error("Error fetching stores", err);
@@ -162,8 +199,8 @@ export default function DistribuidorDashboard() {
 
   useEffect(() => {
     if (activeStore) {
-      if (activeTab === 'inventory') fetchProducts(activeStore.id);
-      if (activeTab === 'orders') fetchOrders(activeStore.id);
+      if (activeTab === 'inventory' || activeTab === 'overview') fetchProducts(activeStore.id);
+      if (activeTab === 'orders' || activeTab === 'overview') fetchOrders(activeStore.id);
     }
   }, [activeTab, activeStore]);
 
@@ -475,226 +512,416 @@ export default function DistribuidorDashboard() {
 
             {activeTab === "overview" && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-primary">payments</span>
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Ventas (Este Mes)</p>
-                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">${orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0).toFixed(2)}</h3>
+                {/* Hero Header */}
+                <section className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold font-headline text-on-surface">Panel de Control</h2>
+                    <p className="text-sm text-on-surface-variant font-body">Eficiencia: 94% • Órdenes Activas: {orders.filter(o => o.status === 'PAID').length} • 2 Alertas Críticas</p>
                   </div>
-                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-secondary/5 flex items-center justify-center group-hover:bg-secondary/10 transition-colors">
-                      <span className="material-symbols-outlined text-secondary">shopping_cart</span>
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Pedidos Totales</p>
-                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">{orders.length}</h3>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1.5 rounded-shopify bg-surface-container-lowest border border-outline-variant/20 text-on-surface font-semibold text-xs flex items-center gap-2 hover:bg-surface-container-low transition-colors">
+                      <span className="material-symbols-outlined text-base">calendar_today</span>
+                      Hoy
+                    </button>
+                    <button className="px-3 py-1.5 rounded-shopify bg-[#1a1c1d] text-white font-semibold text-xs flex items-center gap-2 hover:bg-black transition-colors">
+                      <span className="material-symbols-outlined text-base">download</span>
+                      Exportar Datos
+                    </button>
                   </div>
-                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-tertiary/5 flex items-center justify-center group-hover:bg-tertiary/10 transition-colors">
-                      <span className="material-symbols-outlined text-tertiary">inventory_2</span>
+                </section>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-surface-container-lowest p-6 rounded-shopify border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Ingresos Totales</span>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+12%</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Productos</p>
-                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">{products.length}</h3>
+                    <h3 className="text-2xl font-bold font-headline">${orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0).toFixed(2)}</h3>
+                    <p className="text-[11px] text-on-surface-variant mt-1">vs. mes anterior</p>
                   </div>
-                  <div className="bg-surface-container-lowest p-8 rounded-[32px] border border-outline-variant/10 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-error/5 flex items-center justify-center group-hover:bg-error/10 transition-colors">
-                      <span className="material-symbols-outlined text-error">trending_up</span>
+                  <div className="bg-surface-container-lowest p-6 rounded-shopify border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Ticket Promedio</span>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+5.2%</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant mb-4 opacity-40">Popularidad</p>
-                    <h3 className="font-headline text-4xl font-black text-on-surface tracking-tighter">--</h3>
+                    <h3 className="text-2xl font-bold font-headline">
+                      ${orders.length > 0 ? (orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0) / orders.length).toFixed(2) : '0.00'}
+                    </h3>
+                    <p className="text-[11px] text-on-surface-variant mt-1">Crecimiento estable</p>
+                  </div>
+                  <div className="bg-surface-container-lowest p-6 rounded-shopify border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Tasa de Conversión</span>
+                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">-1.2%</span>
+                    </div>
+                    <h3 className="text-2xl font-bold font-headline">3.42%</h3>
+                    <p className="text-[11px] text-on-surface-variant mt-1">Requiere atención</p>
+                  </div>
+                  <div className="bg-surface-container-lowest p-6 rounded-shopify border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Órdenes Pendientes</span>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">4 Urgentes</span>
+                    </div>
+                    <h3 className="text-2xl font-bold font-headline">{orders.filter(o => o.status === 'PAID').length}</h3>
+                    <p className="text-[11px] text-on-surface-variant mt-1">Próximo despacho: 2h</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Sales Trend Chart */}
-                  <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/10 shadow-xl overflow-hidden relative group">
+                  <div className="lg:col-span-2 bg-surface-container-lowest p-8 rounded-shopify border border-outline-variant/10 shadow-sm relative group">
                     <div className="flex justify-between items-center mb-10">
                       <div>
-                        <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">Tendencia de Ventas</h4>
-                        <p className="text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase mt-1">Ingresos por semana en {activeStore.name}</p>
+                        <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">Tendencia de Ventas</h4>
+                        <p className="text-xs text-on-surface-variant mt-1">Comparativa diaria: Ingresos vs Meta</p>
                       </div>
-                      <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary">trending_up</span>
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-primary"></span>
+                          <span className="text-[10px] font-medium">Ingresos</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                          <span className="text-[10px] font-medium">Meta</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[280px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={salesData}>
                           <defs>
                             <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#286652" stopOpacity={0.3}/>
+                              <stop offset="5%" stopColor="#286652" stopOpacity={0.1}/>
                               <stop offset="95%" stopColor="#286652" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F3F5" />
                           <XAxis 
                             dataKey="name" 
                             axisLine={false} 
                             tickLine={false} 
-                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 500}} 
                             dy={10}
                           />
                           <YAxis 
                             axisLine={false} 
                             tickLine={false} 
-                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
+                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 500}} 
                           />
                           <Tooltip 
-                            contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
+                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', fontWeight: 'bold'}}
                           />
                           <Area 
                             type="monotone" 
                             dataKey="sales" 
                             stroke="#286652" 
-                            strokeWidth={4} 
+                            strokeWidth={3} 
                             fillOpacity={1} 
                             fill="url(#colorSales)" 
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="target" 
+                            stroke="#CBD5E1" 
+                            strokeDasharray="5 5"
+                            strokeWidth={2} 
+                            fill="transparent" 
                           />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  {/* Stock Bar Chart */}
-                  <div className="bg-surface-container-lowest p-8 rounded-[40px] border border-outline-variant/10 shadow-xl overflow-hidden relative group">
-                    <div className="flex justify-between items-center mb-10">
-                      <div>
-                        <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">Niveles de Stock</h4>
-                        <p className="text-[10px] font-black text-on-surface-variant/40 tracking-widest uppercase mt-1">Principales productos en inventario</p>
-                      </div>
-                      <div className="w-10 h-10 rounded-2xl bg-secondary/5 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-secondary">inventory</span>
-                      </div>
+                  {/* Top Products */}
+                  <div className="bg-surface-container-lowest p-8 rounded-shopify border border-outline-variant/10 shadow-sm relative group">
+                    <div className="flex justify-between items-center mb-8">
+                      <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">Top Productos</h4>
+                      <button onClick={() => setActiveTab('inventory')} className="text-xs text-primary font-bold hover:underline">Ver Todos</button>
                     </div>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={inventoryData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
-                          <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
-                            dy={10}
-                          />
-                          <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fill: '#9E9E9E', fontSize: 10, fontWeight: 900}} 
-                          />
-                          <Tooltip 
-                            cursor={{fill: 'transparent'}}
-                            contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
-                          />
-                          <Bar dataKey="stock" fill="#515f74" radius={[10, 10, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <div className="space-y-6">
+                      {topProducts.length === 0 ? (
+                        <p className="text-center text-xs text-on-surface-variant opacity-50 py-10">Sin datos de ventas aún.</p>
+                      ) : topProducts.map((p, idx) => (
+                        <div key={idx} className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-surface-container-low rounded border border-outline-variant/10 flex items-center justify-center overflow-hidden">
+                            <span className="material-symbols-outlined text-outline-variant">eco</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold truncate">{p.name}</p>
+                            <div className="w-full bg-surface-container-low h-1 rounded-full mt-2">
+                              <div 
+                                className={`${p.stock < 50 ? 'bg-rose-500' : 'bg-emerald-500'} h-1 rounded-full transition-all duration-1000`} 
+                                style={{ width: `${Math.min((p.stock/200)*100, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                             <p className={`text-[10px] font-bold ${p.stock < 50 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                               ${p.revenue.toLocaleString()}
+                             </p>
+                             <p className="text-[10px] text-on-surface-variant">{p.stock} unidades</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    <button className="w-full mt-8 py-3 bg-primary text-white text-xs font-bold rounded-shopify hover:opacity-90 transition-all shadow-md shadow-primary/10">
+                      Generar Orden de Compra
+                    </button>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {activeTab === "inventory" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Inventario de Productos</h3>
-                  <button onClick={() => setShowProductModal(true)} className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-2xl text-sm font-black tracking-tight shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95">
-                    <span className="material-symbols-outlined">add</span> NUEVO PRODUCTO
-                  </button>
-                </div>
-                
-                <section className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/60">
-                      <tr>
-                        <th className="px-8 py-5 text-left">Producto</th>
-                        <th className="px-8 py-5 text-left">SKU</th>
-                        <th className="px-8 py-5 text-left">Precio</th>
-                        <th className="px-8 py-5 text-left">Stock</th>
-                        <th className="px-8 py-5 text-left">Estado</th>
-                        <th className="px-8 py-5 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/5">
-                      {loadingProducts ? (
-                        <tr><td colSpan={6} className="p-20 text-center text-on-surface-variant font-bold">Cargando inventario...</td></tr>
-                      ) : products.length === 0 ? (
-                        <tr><td colSpan={6} className="p-20 text-center text-on-surface-variant font-bold opacity-50">No hay productos en esta tienda.</td></tr>
-                      ) : products.map(product => (
-                        <tr key={product.id} className="hover:bg-primary/[0.02] transition-colors group">
-                          <td className="px-8 py-6 font-black text-on-surface">{product.name}</td>
-                          <td className="px-8 py-6 text-sm font-bold opacity-60 font-mono">{product.sku}</td>
-                          <td className="px-8 py-6 text-sm font-black text-primary">${product.basePrice}</td>
-                          <td className="px-8 py-6 text-sm font-bold">{product.quantity}</td>
-                          <td className="px-8 py-6">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${product.status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant/60'}`}>
-                              {product.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO'}
-                            </span>
-                          </td>
-                          <td className="px-8 py-6 text-right">
-                            <button 
-                              onClick={() => {
-                                setEditingProduct(product);
-                                setShowEditProductModal(true);
-                                setEditPriceError("");
-                              }}
-                              className="p-3 text-secondary hover:bg-secondary/10 rounded-2xl transition-all"
-                            >
-                              <span className="material-symbols-outlined">edit</span>
-                            </button>
-                          </td>
+                {/* Recent Orders Section */}
+                <section className="bg-surface-container-lowest border border-outline-variant/10 shadow-sm rounded-shopify overflow-hidden">
+                  <div className="px-6 py-4 flex justify-between items-center border-b border-outline-variant/5">
+                    <h3 className="text-sm font-bold text-on-surface">Órdenes Recientes</h3>
+                    <button onClick={() => setActiveTab('orders')} className="text-xs text-primary font-bold hover:underline">Ver Historial Completo</button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-surface-container-low text-on-surface-variant font-bold uppercase tracking-widest text-[10px]">
+                        <tr>
+                          <th className="px-6 py-3 border-b border-outline-variant/10">Orden</th>
+                          <th className="px-6 py-3 border-b border-outline-variant/10">Fecha</th>
+                          <th className="px-6 py-3 border-b border-outline-variant/10">Cliente</th>
+                          <th className="px-6 py-3 border-b border-outline-variant/10">Estado</th>
+                          <th className="px-6 py-3 border-b border-outline-variant/10 text-right">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/5">
+                        {loadingOrders ? (
+                          <tr><td colSpan={5} className="py-10 text-center font-bold">Cargando órdenes...</td></tr>
+                        ) : orders.length === 0 ? (
+                          <tr><td colSpan={5} className="py-10 text-center text-on-surface-variant opacity-50">Sin órdenes recientes.</td></tr>
+                        ) : orders.slice(0, 5).map(order => (
+                          <tr key={order.id} onClick={() => openInvoiceDrawer(order)} className="hover:bg-surface-container-low cursor-pointer transition-colors group">
+                            <td className="px-6 py-4 font-bold">#ORD-{order.id.toString().split('-')[0].padStart(4, '0')}</td>
+                            <td className="px-6 py-4 text-on-surface-variant">{new Date(order.createdAt).toLocaleDateString()}</td>
+                            <td className="px-6 py-4">{order.customerName || order.buyerEmail || 'Invitado'}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${order.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                {order.status === 'PAID' ? 'Pagado' : 'Pendiente'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right font-bold">${order.totalPrice.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </section>
               </div>
             )}
 
-            {activeTab === "orders" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-                <h3 className="font-headline text-2xl font-black text-on-surface tracking-tighter uppercase">Historial de Ventas</h3>
-                
-                <section className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 shadow-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/60">
-                      <tr>
-                        <th className="px-8 py-5 text-left">Pedido ID</th>
-                        <th className="px-8 py-5 text-left">Cliente</th>
-                        <th className="px-8 py-5 text-left">Total</th>
-                        <th className="px-8 py-5 text-left">Estado</th>
-                        <th className="px-8 py-5 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/5">
-                      {loadingOrders ? (
-                        <tr><td colSpan={5} className="p-20 text-center text-on-surface-variant font-bold">Consultando registros...</td></tr>
-                      ) : orders.length === 0 ? (
-                        <tr><td colSpan={5} className="p-20 text-center text-on-surface-variant font-bold opacity-50">Sin actividad de ventas aún.</td></tr>
-                      ) : orders.map(order => (
-                        <tr key={order.id} className="hover:bg-secondary/[0.02] transition-colors group">
-                          <td className="px-8 py-6 font-mono text-xs opacity-60">#{order.id.split('-')[0]}</td>
-                          <td className="px-8 py-6">
-                            <p className="font-black text-on-surface">{order.customerName}</p>
-                            <p className="text-[10px] text-on-surface-variant opacity-40 font-bold">{order.customerEmail}</p>
-                          </td>
-                          <td className="px-8 py-6 text-sm font-black text-secondary">${order.totalPrice}</td>
-                          <td className="px-8 py-6">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${order.status === 'PAID' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant/60'}`}>
-                              {order.status === 'PAID' ? 'PAGADO' : 'PENDIENTE'}
-                            </span>
-                          </td>
-                          <td className="px-8 py-6 text-right">
-                            <button className="p-3 text-primary hover:bg-primary/10 rounded-2xl transition-all">
-                              <span className="material-symbols-outlined">visibility</span>
-                            </button>
-                          </td>
+            {activeTab === "inventory" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto space-y-8">
+                {/* Header & Search */}
+                <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                  <div className="space-y-1">
+                    <h1 className="text-4xl font-extrabold tracking-tight text-on-surface">Matriz de Inventario</h1>
+                    <p className="text-on-surface-variant max-w-md">Supervisión en tiempo real de los niveles de stock y precios de tu tienda.</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-full md:w-80 group">
+                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+                      <input className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-xl focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest transition-all text-sm outline-none" placeholder="Buscar producto en el catálogo..." type="text"/>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Inventory Table (High-End Editorial Style) */}
+                <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-surface-container-low text-on-surface-variant">
+                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Detalles del Producto</th>
+                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Stock Disponible</th>
+                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Precio (Unidad)</th>
+                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Estado</th>
+                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-surface-container">
+                        {loadingProducts ? (
+                          <tr><td colSpan={5} className="py-20 text-center text-on-surface-variant font-bold">Cargando matriz de inventario...</td></tr>
+                        ) : products.length === 0 ? (
+                          <tr><td colSpan={5} className="py-20 text-center text-on-surface-variant font-bold opacity-50">Inventario vacío.</td></tr>
+                        ) : products.map(product => {
+                          const isLowStock = product.quantity <= (product.minStockAlert || 5);
+                          return (
+                            <tr key={product.id} className="group hover:bg-surface-container-low transition-colors">
+                              <td className="px-6 py-5">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-14 h-14 rounded-lg bg-surface-container-highest overflow-hidden flex-shrink-0 flex items-center justify-center text-on-surface-variant">
+                                    {product.imageUrl ? (
+                                      <img alt={product.name} className="w-full h-full object-cover" src={product.imageUrl} />
+                                    ) : (
+                                       <span className="material-symbols-outlined opacity-50">shopping_bag</span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-on-surface">{product.name}</p>
+                                    <p className="text-xs text-on-surface-variant font-mono">SKU: {product.sku}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-5 text-right">
+                                {isLowStock ? (
+                                  <div className="inline-flex flex-col items-end">
+                                    <span className="font-headline font-semibold text-error">{product.quantity} Unidades</span>
+                                    <span className="bg-error-container text-on-error-container text-[8px] font-black uppercase px-2 py-0.5 rounded-full mt-1">Alerta Restock</span>
+                                  </div>
+                                ) : (
+                                  <span className="font-headline font-semibold text-on-surface">{product.quantity} Unidades</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-5 text-right font-body text-on-surface-variant">
+                                ${product.basePrice.toFixed(2)}
+                              </td>
+                              <td className="px-6 py-5">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter ${product.status === 'ACTIVE' ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-surface-container-high text-on-surface-variant/60'}`}>
+                                  {product.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-5 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button 
+                                    onClick={() => {
+                                      setEditingProduct(product);
+                                      setShowEditProductModal(true);
+                                      setEditPriceError("");
+                                    }}
+                                    className="p-2 hover:bg-surface-container-highest rounded-lg transition-all text-on-surface-variant" 
+                                    title="Fijar Precio"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">edit</span>
+                                  </button>
+                                  <button className="p-2 hover:bg-error-container/50 rounded-lg transition-all text-error" title="Desactivar">
+                                    <span className="material-symbols-outlined text-sm">block</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Pagination Footnote */}
+                  <div className="px-6 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant font-medium">
+                    <span>Mostrando {products.length} productos en catálogo</span>
+                    <div className="flex gap-4">
+                      <button className="hover:text-primary transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed">
+                        <span className="material-symbols-outlined text-sm">chevron_left</span> Anterior
+                      </button>
+                      <button className="hover:text-primary transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed">
+                        Siguiente <span className="material-symbols-outlined text-sm">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating Action Button for New Product */}
+                <button 
+                  onClick={() => setShowProductModal(true)}
+                  className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-transform z-50 group"
+                >
+                  <span className="material-symbols-outlined font-bold">add</span>
+                  <span className="absolute right-[calc(100%+1rem)] mr-0 bg-on-background text-background px-3 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Nuevo Producto</span>
+                </button>
+              </div>
+            )}
+
+            {activeTab === "orders" && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto space-y-8">
+                {/* Header & Search */}
+                <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                  <div className="space-y-1">
+                    <h1 className="text-4xl font-extrabold tracking-tight text-on-surface">Historial de Órdenes</h1>
+                    <p className="text-on-surface-variant max-w-md">Registro completo de las ventas y transacciones generadas en tu tienda.</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-full md:w-80 group">
+                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+                      <input className="w-full pl-12 pr-4 py-3 bg-surface-container-low border-none rounded-xl focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest transition-all text-sm outline-none" placeholder="Buscar orden por #ID o cliente..." type="text"/>
+                    </div>
+                  </div>
+                </section>
+                
+                <section className="bg-surface-container-lowest border border-outline-variant/20 shadow-sm rounded-shopify overflow-hidden">
+                  <div className="px-6 py-4 flex justify-between items-center border-b border-outline-variant/10">
+                    <h3 className="text-sm font-bold text-on-surface">Todas las Órdenes ({orders.length})</h3>
+                    <div className="flex gap-2">
+                      <button className="p-1.5 hover:bg-surface-container-high rounded-shopify transition-colors text-on-surface-variant">
+                        <span className="material-symbols-outlined text-sm">filter_list</span>
+                      </button>
+                      <button className="px-3 py-1.5 rounded-shopify bg-[#1a1c1d] text-white font-semibold text-xs flex items-center gap-2 hover:bg-black transition-colors">
+                        <span className="material-symbols-outlined text-base">download</span> Exportar CSV
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-surface-container-low text-on-surface-variant font-bold uppercase tracking-widest text-[10px]">
+                        <tr>
+                          <th className="px-6 py-4 border-b border-outline-variant/10">Orden #</th>
+                          <th className="px-6 py-4 border-b border-outline-variant/10">Fecha</th>
+                          <th className="px-6 py-4 border-b border-outline-variant/10">Cliente</th>
+                          <th className="px-6 py-4 border-b border-outline-variant/10">Estado</th>
+                          <th className="px-6 py-4 border-b border-outline-variant/10 text-right">Total</th>
+                          <th className="px-6 py-4 border-b border-outline-variant/10 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/5">
+                        {loadingOrders ? (
+                          <tr><td colSpan={6} className="py-20 text-center text-on-surface-variant font-bold">Consultando registros...</td></tr>
+                        ) : orders.length === 0 ? (
+                          <tr><td colSpan={6} className="py-20 text-center text-on-surface-variant font-bold opacity-50">Sin actividad de ventas aún.</td></tr>
+                        ) : orders.map(order => {
+                           const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+                           const isDelivered = order.status === 'DELIVERED';
+                           const isProcessing = order.status === 'PROCESSING';
+                           return (
+                              <tr key={order.id} className="hover:bg-surface-container-low cursor-pointer transition-colors group">
+                                <td className="px-6 py-5 font-bold">#ORD-{order.id.toString().split('-')[0].padStart(4, '0')}</td>
+                                <td className="px-6 py-5 text-on-surface-variant">{date}</td>
+                                <td className="px-6 py-5">
+                                  <p className="font-bold text-on-surface">{order.customerName || order.buyerEmail || 'Invitado'}</p>
+                                  {(order.customerEmail || order.buyerEmail) && <p className="text-[10px] text-on-surface-variant opacity-70">{order.customerEmail || order.buyerEmail}</p>}
+                                </td>
+                                <td className="px-6 py-5">
+                                  {isDelivered && <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">Entregado</span>}
+                                  {isProcessing && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase">Procesando</span>}
+                                  {!isDelivered && !isProcessing && <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold uppercase">{order.status || 'PENDIENTE'}</span>}
+                                </td>
+                                <td className="px-6 py-5 text-right font-bold">${order.totalPrice?.toFixed(2) || '0.00'}</td>
+                                <td className="px-6 py-5 text-right flex justify-end gap-2">
+                                  <button title="Ver Factura" onClick={() => openInvoiceDrawer(order)} className="p-2 border border-outline-variant/20 hover:bg-surface-container-highest rounded-md text-on-surface-variant transition-colors flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                                  </button>
+                                  <button title="Gestionar Envío" className="p-2 bg-primary text-white hover:bg-primary/90 rounded-md transition-colors flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[16px]">local_shipping</span>
+                                  </button>
+                                </td>
+                              </tr>
+                           );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="px-6 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant font-medium">
+                    <span>Mostrando {orders.length} órdenes registradas</span>
+                    <div className="flex gap-4">
+                      <button className="hover:text-primary transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed">
+                        <span className="material-symbols-outlined text-sm">chevron_left</span> Anterior
+                      </button>
+                      <button className="hover:text-primary transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed">
+                        Siguiente <span className="material-symbols-outlined text-sm">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
                 </section>
               </div>
             )}
@@ -1074,6 +1301,116 @@ export default function DistribuidorDashboard() {
                  </button>
                </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Drawer */}
+      {isInvoiceDrawerOpen && selectedInvoiceOrder && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsInvoiceDrawerOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-surface-container-lowest h-full shadow-2xl animate-in fade-in slide-in-from-right duration-300 flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-outline-variant/10">
+              <div>
+                <h3 className="text-xl font-bold text-on-surface">Factura de Orden</h3>
+                <p className="text-xs text-on-surface-variant font-mono mt-1">#ORD-{selectedInvoiceOrder.id.toString().padStart(4, '0')}</p>
+              </div>
+              <button onClick={() => setIsInvoiceDrawerOpen(false)} className="w-8 h-8 rounded-full bg-surface-container-high hover:bg-surface-variant flex items-center justify-center transition-colors">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Company Info */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-headline font-bold text-lg">{activeStore?.name}</h4>
+                  <p className="text-xs text-on-surface-variant mt-1">{activeStore?.subdomain}.superozono.com</p>
+                </div>
+                {branding.logoUrl ? (
+                  <img src={branding.logoUrl} alt="Logo" className="h-10 object-contain" />
+                ) : (
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary">store</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px w-full bg-outline-variant/10"></div>
+
+              {/* Customer Info */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Facturado a:</p>
+                  <p className="font-bold text-on-surface">{selectedInvoiceOrder.buyerEmail || 'Invitado'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Fecha:</p>
+                  <p className="font-medium text-on-surface">{new Date(selectedInvoiceOrder.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Detalle de Compra</p>
+                <div className="border border-outline-variant/20 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-surface-container-low">
+                      <tr>
+                        <th className="px-4 py-2 font-bold text-on-surface-variant">Producto</th>
+                        <th className="px-4 py-2 font-bold text-on-surface-variant text-right">Cant.</th>
+                        <th className="px-4 py-2 font-bold text-on-surface-variant text-right">Precio</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/10">
+                      {selectedInvoiceOrder.items?.map((item: any, i: number) => (
+                        <tr key={i}>
+                          <td className="px-4 py-3 font-medium text-on-surface">{item.productName || `Item #${item.productId}`}</td>
+                          <td className="px-4 py-3 text-right">{item.quantity}</td>
+                          <td className="px-4 py-3 text-right font-mono">${item.price.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                      {(!selectedInvoiceOrder.items || selectedInvoiceOrder.items.length === 0) && (
+                        <tr>
+                          <td colSpan={3} className="px-4 py-3 text-center text-on-surface-variant opacity-60">Detalles no disponibles en esta orden.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="flex justify-end pt-4 border-t border-outline-variant/10">
+                <div className="w-1/2 space-y-2 text-sm">
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Subtotal</span>
+                    <span>${(selectedInvoiceOrder.totalPrice * 0.84).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>IVA (16%)</span>
+                    <span>${(selectedInvoiceOrder.totalPrice * 0.16).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg text-on-surface pt-2 border-t border-outline-variant/10">
+                    <span>Total</span>
+                    <span>${selectedInvoiceOrder.totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-outline-variant/10 bg-surface-container-low">
+              <button 
+                onClick={() => {
+                  showToast("Descargando PDF...", "success");
+                  // PDF downloading logic goes here
+                  window.print(); // Quick hack for PDF download dialog
+                }} 
+                className="w-full py-3 bg-[#1a1c1d] hover:bg-black text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">download</span> Descargar PDF
+              </button>
+            </div>
           </div>
         </div>
       )}
